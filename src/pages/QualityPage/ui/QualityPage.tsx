@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useGetDailyHistoryQuery, useGetDataQualityQuery } from "@/entities/AccountHistory";
 import { useGetBacktestQuery, useListBacktestsQuery } from "@/entities/Backtest";
-import { useGetCompanyQuery } from "@/entities/Company";
+import { dataAsOfDate, useGetAccountQuery, useGetCompanyQuery } from "@/entities/Company";
 import { QUALITY_LABEL } from "@/entities/Forecast";
 import { useGetForecastSettingsQuery } from "@/entities/ForecastSettings";
 import { useWorkspace } from "@/entities/Workspace";
@@ -11,7 +11,7 @@ import { CompletenessForm } from "@/features/ConfirmCompleteness";
 import { RunBacktestForm } from "@/features/RunBacktest";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
-import { addDays, formatDay, formatInstant, todayIso } from "@/shared/lib/date/date";
+import { addDays, formatDay, formatInstant } from "@/shared/lib/date/date";
 import { formatMoney } from "@/shared/lib/format/money";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
@@ -30,7 +30,8 @@ const QualityPage = () => {
 	const company = useGetCompanyQuery(companyId);
 	const perms = company.data?.permissions;
 	const quality = useGetDataQualityQuery({ companyId, accountId });
-	const to = addDays(todayIso(), -1);
+	const account = useGetAccountQuery({ companyId, accountId });
+	const to = dataAsOfDate(account.data);
 	const history = useGetDailyHistoryQuery({ companyId, accountId, from: addDays(to, -26 * 7 + 1), to });
 	const settings = useGetForecastSettingsQuery({ companyId, accountId });
 	const backtests = useListBacktestsQuery({ companyId, accountId });
@@ -165,6 +166,7 @@ const QualityPage = () => {
 									accountId={accountId}
 									windowWeeks={settings.data.windowWeeks}
 									horizonDays={settings.data.horizonDays}
+									dataEnd={account.data ? to : undefined}
 									disabled={!perms?.canRunBacktest}
 									onFinished={setSelected}
 								/>

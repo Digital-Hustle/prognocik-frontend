@@ -26,6 +26,8 @@ interface PaymentsTableProps {
 	companyId: string;
 	accountId: string;
 	canEdit: boolean;
+	/** Последний день с данными счёта: по умолчанию показываем 90 дней до него */
+	dataEnd?: string | null;
 }
 
 const PAGE = 50;
@@ -67,8 +69,12 @@ const Checkbox = ({ checked, onChange, label }: { checked: boolean; onChange: ()
 	</button>
 );
 
-export const PaymentsTable = memo(({ companyId, accountId, canEdit }: PaymentsTableProps) => {
-	const [range, setRange] = useState<DateRange>({ from: addDays(todayIso(), -90), to: todayIso() });
+export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: PaymentsTableProps) => {
+	const end = dataEnd ?? todayIso();
+	const [range, setRange] = useState<DateRange>({ from: addDays(end, -90), to: end });
+	useEffect(() => {
+		if (dataEnd) setRange({ from: addDays(dataEnd, -90), to: dataEnd });
+	}, [dataEnd]);
 	const [direction, setDirection] = useState<"" | Direction>("");
 	const [category, setCategory] = useState("");
 	const [q, setQ] = useState("");
@@ -126,11 +132,11 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit }: PaymentsTa
 							onChange={setRange}
 							max={todayIso()}
 							presets={[
-								{ label: "30 дней", range: { from: addDays(todayIso(), -30), to: todayIso() } },
-								{ label: "90 дней", range: { from: addDays(todayIso(), -90), to: todayIso() } },
-								{ label: "Полгода", range: { from: addDays(todayIso(), -182), to: todayIso() } },
-								{ label: "Год", range: { from: addDays(todayIso(), -365), to: todayIso() } },
-								{ label: "2 года", range: { from: addDays(todayIso(), -730), to: todayIso() } },
+								{ label: "30 дней", range: { from: addDays(end, -30), to: end } },
+								{ label: "90 дней", range: { from: addDays(end, -90), to: end } },
+								{ label: "Полгода", range: { from: addDays(end, -182), to: end } },
+								{ label: "Год", range: { from: addDays(end, -365), to: end } },
+								{ label: "2 года", range: { from: addDays(end, -730), to: end } },
 							]}
 						/>
 					</div>

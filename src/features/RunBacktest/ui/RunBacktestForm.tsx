@@ -1,6 +1,6 @@
 import { FlaskConical } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { ForecastScope } from "@/entities/Forecast";
 import { SCOPE_LABEL } from "@/entities/Forecast";
@@ -28,6 +28,8 @@ interface RunBacktestFormProps {
 	/** Окно истории из настроек прогноза */
 	windowWeeks: number;
 	horizonDays: number;
+	/** Последний день с данными счёта (dataAsOfDate); отсечки строятся от него */
+	dataEnd?: string;
 	disabled?: boolean;
 	onFinished?: (backtestId: string) => void;
 }
@@ -37,13 +39,18 @@ interface RunBacktestFormProps {
  * фактом. Отсечка + горизонт должны помещаться до даты среза.
  */
 export const RunBacktestForm = memo(
-	({ companyId, accountId, windowWeeks, horizonDays, disabled, onFinished }: RunBacktestFormProps) => {
+	({ companyId, accountId, windowWeeks, horizonDays, dataEnd, disabled, onFinished }: RunBacktestFormProps) => {
 		const dispatch = useAppDispatch();
 		const [create, state] = useCreateBacktestJobMutation();
 		const idem = useIdempotencyKey();
-		const yesterday = addDays(todayIso(), -1);
+		const yesterday = dataEnd ?? addDays(todayIso(), -1);
 		const [lastOrigin, setLastOrigin] = useState(addDays(yesterday, -horizonDays));
 		const [firstOrigin, setFirstOrigin] = useState(addDays(yesterday, -horizonDays - 7 * 11));
+		// Данные счёта подгрузились позже — переставляем отсечки от конца данных
+		useEffect(() => {
+			setLastOrigin(addDays(yesterday, -horizonDays));
+			setFirstOrigin(addDays(yesterday, -horizonDays - 7 * 11));
+		}, [yesterday, horizonDays]);
 		const [stepDays, setStepDays] = useState(7);
 		const [scope, setScope] = useState<ForecastScope>("HISTORY_ONLY");
 		const [evaluateRisk, setEvaluateRisk] = useState(true);
@@ -113,7 +120,7 @@ export const RunBacktestForm = memo(
 					</Field>
 					<Field
 						label="Последняя отсечка"
-						hint={`Не позже ${horizonDays} дней до вчера`}
+						hint={`Не позже ${horizonDays} дней до конца данных`}
 					>
 						<DatePicker
 							value={lastOrigin}

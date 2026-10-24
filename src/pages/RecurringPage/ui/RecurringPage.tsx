@@ -1,7 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Repeat2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
-import { useGetCompanyQuery } from "@/entities/Company";
+import { dataAsOfDate, useGetAccountQuery, useGetCompanyQuery } from "@/entities/Company";
 import { useCategoryNames } from "@/entities/Payment";
 import { describeSchedule, useListRecurringPatternsQuery } from "@/entities/Recurring";
 import type { PatternStatus } from "@/entities/Recurring";
@@ -32,6 +32,7 @@ type Filter = "ALL" | PatternStatus;
 const RecurringPage = () => {
 	const { companyId, accountId } = useWorkspace();
 	const company = useGetCompanyQuery(companyId);
+	const account = useGetAccountQuery({ companyId, accountId });
 	const canEdit = company.data?.permissions.canEditPayments ?? false;
 	const names = useCategoryNames(companyId);
 	const { data, isLoading, error, refetch } = useListRecurringPatternsQuery({ companyId, accountId });
@@ -55,7 +56,8 @@ const RecurringPage = () => {
 					<DetectRecurringButton
 						companyId={companyId}
 						accountId={accountId}
-						disabled={!canEdit}
+						disabled={!canEdit || !account.data}
+						asOfDate={dataAsOfDate(account.data)}
 						label={data?.items.length ? "Искать заново" : "Найти регулярные платежи"}
 					/>
 				}

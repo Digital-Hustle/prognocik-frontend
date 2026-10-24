@@ -1,6 +1,7 @@
 import { AlertTriangle, CalendarX, ShieldCheck, TrendingDown, Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import { memo } from "react";
+import type { Account } from "@/entities/Company";
 import { RISK_UNAVAILABLE_LABEL } from "@/entities/Forecast";
 import type { Dashboard } from "@/entities/Forecast";
 import { stagger } from "@/shared/config/motion";
@@ -13,6 +14,8 @@ import { Stat } from "@/shared/ui/Stat/Stat";
 
 interface ForecastOverviewProps {
 	dashboard: Dashboard;
+	/** Последний известный остаток счёта — если в окне dashboard нет свежих данных */
+	account?: Pick<Account, "latestBalance" | "latestBalanceDate"> | null;
 }
 
 const money = (v: number) => formatMoney(v);
@@ -21,15 +24,16 @@ const money = (v: number) => formatMoney(v);
  * Четыре ответа для предпринимателя: сколько есть сейчас, когда может не хватить, сколько не хватит и насколько
  * это вероятно. null-вероятность — «недостаточно данных», а не 0%.
  */
-export const ForecastOverview = memo(({ dashboard }: ForecastOverviewProps) => {
+export const ForecastOverview = memo(({ dashboard, account }: ForecastOverviewProps) => {
 	const f = dashboard.latestForecast;
-	const balance = toNumber(dashboard.currentBalance?.balance);
+	const balance = toNumber(dashboard.currentBalance?.balance ?? account?.latestBalance);
+	const balanceDate = dashboard.currentBalance?.date ?? account?.latestBalanceDate ?? null;
 	const minBalance = toNumber(f?.expectedMinimumBalance);
 	const shortfall = toNumber(f?.maxExpectedShortfall);
 	const gapDate = f?.firstExpectedGapDate ?? null;
 	const risk = f?.riskEstimate;
 	const riskAvailable = risk?.availability === "AVAILABLE" && risk.probability !== null;
-	const daysToGap = gapDate ? diffDays(dashboard.asOfDate, gapDate) : null;
+	const daysToGap = gapDate ? diffDays(f?.asOfDate ?? dashboard.asOfDate, gapDate) : null;
 
 	return (
 		<motion.dl
@@ -41,7 +45,7 @@ export const ForecastOverview = memo(({ dashboard }: ForecastOverviewProps) => {
 			<Stat
 				tone="hero"
 				icon={<Wallet />}
-				label="На счёте сейчас"
+				label={dashboard.currentBalance ? "На счёте сейчас" : "Последний остаток"}
 				value={
 					balance === null ? (
 						"—"
@@ -52,11 +56,7 @@ export const ForecastOverview = memo(({ dashboard }: ForecastOverviewProps) => {
 						/>
 					)
 				}
-				sub={
-					dashboard.currentBalance
-						? `на ${formatDay(dashboard.currentBalance.date)}`
-						: "Загрузите выписку или укажите остаток"
-				}
+				sub={balanceDate ? `на ${formatDay(balanceDate)}` : "Загрузите выписку или укажите остаток"}
 			/>
 			<Stat
 				tone={gapDate ? "danger" : "plain"}
