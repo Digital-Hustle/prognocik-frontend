@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+		/>
+		<meta
+			name="description"
+			content="ПрогноCIк — прогноз остатка и кассовых разрывов для малого бизнеса. Банк Центр-инвест."
+		/>
+		<meta
+			name="theme-color"
+			content="#0f2a20"
+		/>
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href="/favicon.svg"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.googleapis.com"
+		/>
+		<link
+			rel="preconnect"
+			href="https://fonts.gstatic.com"
+			crossorigin
+		/>
+		<!-- Тема до первой отрисовки: без вспышки светлого фона в тёмной теме -->
+		<script>
+			try {
+				var m = localStorage.getItem("prognocik.theme") || "system";
+				var d = m === "dark" || (m === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+				document.documentElement.classList.toggle("dark", d);
+			} catch (e) {}
+		</script>
+		<title>ПрогноCIк — прогноз денег для бизнеса</title>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script
+			type="module"
+			src="/src/index.tsx"
+		></script>
+	</body>
+</html>

@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+build
+dist
+*.log
+*.min.js
+src/app/styles/theme.css
+docs/DESIGN.md
+.agents
+.claude
+package-lock.json

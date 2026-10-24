@@ -1,0 +1,27 @@
+# AGENTS.md — prognocik-frontend
+
+Одно Vite-приложение ПрогноCIка (кейс Банка Центр-инвест). Перед любой фронтовой задачей:
+
+1. Скилл `.agents/skills/frontend-fsd/SKILL.md` — где лежит файл, как называть слайс, правила импортов.
+   **Поправки для этого репо (важнее текста скилла):**
+   - стиль кода и состояние — как в WINNER-hackathon-2025-frontend: Redux Toolkit + RTK Query
+     (`rtkApi.injectEndpoints`), а не TanStack Query/zustand; слайсы `features` — PascalCase;
+   - фирменный стиль — Центр-инвест (`src/shared/config/tokens.ts`, `docs/DESIGN.md`), а не Сбер;
+   - тексты пишем по-русски прямо в компонентах (i18n не подключён).
+2. Визуальная работа — `docs/DESIGN.md`. Цвета, радиусы, тени, длительности — только токены. Новый токен →
+   `tokens.ts` + `npm run gen:tokens`. `theme.css` руками не править.
+3. API — только реальный Gateway: `docs/FRONTEND_API_GUIDE.md` и DTO бэкенда `hack-2026-back`. Моков нет и не
+   добавляем. Деньги — строки, даты — `YYYY-MM-DD`, null ≠ 0.
+4. Анимации — `motion/react` и пресеты `src/shared/config/motion.ts`; WebGL — `ogl` (Aurora).
+
+## Проверка перед PR
+
+```bash
+npm run check && npm run build && npm run fsd
+```
+
+## Нельзя
+
+- Хранить токены в `localStorage`, ставить `X-User-*`, логировать выписки/суммы/ответы API.
+- Повторять изменяющие запросы автоматически (кроме отказа по CSRF).
+- Показывать отсутствие данных как ноль, а `probability: null` — как 0%.
