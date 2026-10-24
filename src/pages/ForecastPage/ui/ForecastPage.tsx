@@ -1,9 +1,9 @@
-import { FileUp, FlaskConical, Info, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarClock, FileUp, FlaskConical, Info, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGetDailyHistoryQuery } from "@/entities/AccountHistory";
-import { useGetAccountQuery } from "@/entities/Company";
+import { dataAsOfDate, useGetAccountQuery } from "@/entities/Company";
 import { QUALITY_LABEL, SCOPE_LABEL, useGetDashboardQuery } from "@/entities/Forecast";
 import { useWorkspace } from "@/entities/Workspace";
 import { PlanFormDialog } from "@/features/EditExpectedPayment";
@@ -79,8 +79,13 @@ const ForecastPage = () => {
 		setPolling(hasRunning);
 	}, [hasRunning]);
 
-	const asOf = d?.asOfDate ?? addDays(new Date().toISOString().slice(0, 10), -1);
-	const history = useGetDailyHistoryQuery({ companyId, accountId, from: addDays(asOf, -41), to: asOf }, { skip: !d });
+	// Срез для расчёта — конец данных счёта: выписки бывают историческими, а «вчера» по ним пусто
+	const runAsOf = dataAsOfDate(account.data, d?.asOfDate);
+	const chartAsOf = d?.latestForecast?.asOfDate ?? runAsOf;
+	const history = useGetDailyHistoryQuery(
+		{ companyId, accountId, from: addDays(chartAsOf, -41), to: chartAsOf },
+		{ skip: !d || !account.data }
+	);
 
 	const [mode, setMode] = useState<Mode>("forecast");
 	const [scenario, setScenario] = useState<ScenarioResult | null>(null);
@@ -107,7 +112,7 @@ const ForecastPage = () => {
 		[mode, scenario]
 	);
 
-	if (dashboard.isLoading) {
+	if (dashboard.isLoading || account.isLoading) {
 		return (
 			<div className="flex flex-col gap-4">
 				<Skeleton className="h-16 w-2/3" />
@@ -143,7 +148,9 @@ const ForecastPage = () => {
 
 	const f = d.latestForecast;
 	const canWrite = d.permissions.canWrite;
-	const noData = !d.currentBalance && !f;
+	// «Нет данных» — только если у счёта нет ни остатка, ни прогноза (а не пустое окно у «вчера»)
+	const noData = !d.currentBalance && !f && account.data?.latestBalance === null;
+	const historical = runAsOf < d.asOfDate;
 	const stale = f?.staleness === "STALE" || d.refresh.needsRefresh;
 
 	return (
@@ -161,7 +168,7 @@ const ForecastPage = () => {
 						<RunForecastButton
 							companyId={companyId}
 							accountId={accountId}
-							asOfDate={d.asOfDate}
+							asOfDate={runAsOf}
 							externalBusy={running.length > 0}
 							label={f ? "Пересчитать" : "Рассчитать прогноз"}
 						/>
@@ -170,6 +177,16 @@ const ForecastPage = () => {
 			/>
 
 			<AnimatePresence initial={false}>
+				{historical && !noData && (
+					<Banner
+						key="historical"
+						tone="neutral"
+						icon={<CalendarClock />}
+					>
+						Последние данные по счёту — {formatDayFull(runAsOf)}, прогноз строится от этой даты. Загрузите
+						свежую выписку, чтобы срез был сегодняшним.
+					</Banner>
+				)}
 				{running.length > 0 && (
 					<Banner
 						key="running"
@@ -210,7 +227,10 @@ const ForecastPage = () => {
 				</Card>
 			) : (
 				<>
-					<ForecastOverview dashboard={d} />
+					<ForecastOverview
+						dashboard={d}
+						account={account.data}
+					/>
 
 					<motion.div
 						variants={stagger(0.06, 0.1)}

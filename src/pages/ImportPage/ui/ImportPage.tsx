@@ -2,7 +2,7 @@ import { ArrowRight, FileSpreadsheet, History } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useGetCompanyQuery } from "@/entities/Company";
+import { dataAsOfDate, useGetCompanyQuery } from "@/entities/Company";
 import { IMPORT_STATUS_LABEL, useGetImportQuery, useListImportsQuery } from "@/entities/Import";
 import type { StatementImport } from "@/entities/Import";
 import { useWorkspace } from "@/entities/Workspace";
@@ -157,6 +157,7 @@ const ImportPage = () => {
 										companyId={companyId}
 										accountId={accountId}
 										disabled={!canImport}
+										asOfDate={dataAsOfDate({ latestBalanceDate: result.toDate })}
 									/>
 									<Link to={RoutePath.forecast}>
 										<Button variant="outline">

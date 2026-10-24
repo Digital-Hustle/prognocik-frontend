@@ -19,6 +19,8 @@ interface DetectRecurringButtonProps {
 	disabled?: boolean;
 	variant?: "brand" | "outline" | "primary";
 	label?: string;
+	/** Дата среза — конец данных счёта (dataAsOfDate). По умолчанию вчера. */
+	asOfDate?: string;
 }
 
 /** Поиск регулярностей: POST recurring-detection-jobs → polling → GET recurring-patterns */
@@ -29,6 +31,7 @@ export const DetectRecurringButton = memo(
 		disabled,
 		variant = "brand",
 		label = "Найти регулярные платежи",
+		asOfDate,
 	}: DetectRecurringButtonProps) => {
 		const dispatch = useAppDispatch();
 		const [create, state] = useCreateDetectionJobMutation();
@@ -50,7 +53,7 @@ export const DetectRecurringButton = memo(
 
 		const start = async () => {
 			// Срез — вчера: сегодняшний день ещё не закрыт выпиской
-			const body = { companyId, accountId, asOfDate: addDays(todayIso(), -1) };
+			const body = { companyId, accountId, asOfDate: asOfDate ?? addDays(todayIso(), -1) };
 			const rs = await create({ ...body, idempotencyKey: idem.get(body) });
 			if ("data" in rs && rs.data) {
 				idem.done();

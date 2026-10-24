@@ -1,4 +1,5 @@
 export type { Company, CompanyRq, Account, AccountRq, Member, Permissions, Role, LegalForm } from "./model/types";
+export { dataAsOfDate } from "./lib/dataAsOfDate";
 export { ROLE_LABEL, LEGAL_FORM_LABEL } from "./model/consts";
 export {
 	companyApi,
