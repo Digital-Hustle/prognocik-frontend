@@ -30,8 +30,8 @@ self.addEventListener("fetch", (event) => {
 		return;
 	}
 
-	// Файлы сборки с хэшем в имени не меняются — отдаём из кэша
-	if (url.pathname.startsWith("/assets/")) {
+	// Офлайн-экран и его иконки, а также файлы сборки с хэшем — отдаём из кэша
+	if (SHELL.includes(url.pathname) || url.pathname.startsWith("/assets/")) {
 		event.respondWith(
 			caches.match(request).then(
 				(hit) =>
