@@ -6,6 +6,7 @@ import type { ItemsRs } from "@/shared/api/types";
 const staleTags = (accountId: string) => [
 	{ type: "Dashboard" as const, id: accountId },
 	{ type: "PlanFact" as const, id: accountId },
+	{ type: "Analytics" as const, id: accountId },
 ];
 
 export const categoryApi = rtkApi.injectEndpoints({

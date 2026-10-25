@@ -123,6 +123,7 @@ export const TAGS = [
 	"Allocations",
 	"PlanFact",
 	"Settings",
+	"Analytics",
 ] as const;
 
 export const rtkApi = createApi({
