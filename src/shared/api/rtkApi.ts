@@ -127,6 +127,10 @@ export const TAGS = [
 	"PlanFact",
 	"Settings",
 	"Analytics",
+	"Integrations",
+	"Employees",
+	"TaxCalendar",
+	"PaymentCalendar",
 ] as const;
 
 export const rtkApi = createApi({

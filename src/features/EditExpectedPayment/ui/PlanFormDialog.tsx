@@ -29,7 +29,7 @@ interface PlanFormDialogProps {
 	/** Редактирование существующего плана; без него — создание */
 	plan?: ExpectedPayment | null;
 	/** Предзаполнение (например, из сценария «что если») */
-	preset?: Partial<Pick<PlanRq, "title" | "direction" | "amount" | "dueDate" | "categoryCode" | "note">>;
+	preset?: Partial<Pick<PlanRq, "title" | "direction" | "amount" | "dueDate" | "categoryCode" | "note" | "source">>;
 }
 
 const parseAmount = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
@@ -114,7 +114,7 @@ export const PlanFormDialog = memo(({ open, onClose, companyId, accountId, plan,
 			relation,
 			recurringPatternId: relation === "REPLACES_RECURRING" ? recurringPatternId : null,
 			baselineCounterpartyKey: relation === "REPLACES_BASELINE" ? counterpartyKey.trim() : null,
-			source: plan?.source ?? "MANUAL",
+			source: plan?.source ?? preset?.source ?? "MANUAL",
 			sourceDocument: plan?.sourceDocument ?? null,
 		};
 

@@ -1,10 +1,18 @@
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, CalendarPlus, Link2, Pencil } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { ComponentProps } from "react";
 import { useGetCompanyQuery } from "@/entities/Company";
-import { PLAN_SOURCE_LABEL, PLAN_STATUS_LABEL, useListExpectedPaymentsQuery } from "@/entities/ExpectedPayment";
+import {
+	PLAN_SOURCE_LABEL,
+	PLAN_STATUS_LABEL,
+	SourceBadge,
+	isBitrixPlan,
+	useListExpectedPaymentsQuery,
+} from "@/entities/ExpectedPayment";
 import type { ExpectedPayment } from "@/entities/ExpectedPayment";
 import { useCategoryNames } from "@/entities/Payment";
+import type { TaxCalendarItem } from "@/entities/TaxCalendar";
 import { useWorkspace } from "@/entities/Workspace";
 import { AllocationsDialog } from "@/features/AllocatePayment";
 import { CancelPlanButton, PlanFormDialog } from "@/features/EditExpectedPayment";
@@ -24,8 +32,11 @@ import { Segmented } from "@/shared/ui/Segmented/Segmented";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { Stat } from "@/shared/ui/Stat/Stat";
 import { Status } from "@/shared/ui/Status/Status";
+import { PaymentCalendar } from "@/widgets/PaymentCalendar";
+import { TaxCalendar } from "@/widgets/TaxCalendar";
 
 type Show = "open" | "all";
+type View = "list" | "calendar";
 
 const PlansPage = () => {
 	const { companyId, accountId } = useWorkspace();
@@ -42,6 +53,13 @@ const PlansPage = () => {
 	});
 	const [editing, setEditing] = useState<ExpectedPayment | null>(null);
 	const [formOpen, setFormOpen] = useState(false);
+	const [view, setView] = useState<View>("list");
+	const [preset, setPreset] = useState<ComponentProps<typeof PlanFormDialog>["preset"]>();
+	const createFromTax = useCallback((item: TaxCalendarItem) => {
+		setEditing(null);
+		setPreset({ title: item.title, dueDate: item.dueDate, direction: "OUT", source: "TAX" });
+		setFormOpen(true);
+	}, []);
 	const [allocFor, setAllocFor] = useState<ExpectedPayment | null>(null);
 	const [allocOpen, setAllocOpen] = useState(false);
 
@@ -72,6 +90,7 @@ const PlansPage = () => {
 							variant="brand"
 							onClick={() => {
 								setEditing(null);
+								setPreset(undefined);
 								setFormOpen(true);
 							}}
 						>
@@ -82,7 +101,33 @@ const PlansPage = () => {
 				}
 			/>
 
-			{data && (
+			<Segmented
+				value={view}
+				onChange={setView}
+				label="Вид"
+				options={[
+					{ value: "list", label: "Список планов" },
+					{ value: "calendar", label: "Календарь платежей" },
+				]}
+			/>
+
+			{view === "calendar" && (
+				<PaymentCalendar
+					companyId={companyId}
+					accountId={accountId}
+					names={names}
+				/>
+			)}
+
+			{view === "list" && (
+				<TaxCalendar
+					companyId={companyId}
+					canCreate={canEdit}
+					onCreatePlan={createFromTax}
+				/>
+			)}
+
+			{view === "list" && data && (
 				<motion.dl
 					variants={stagger(0.05)}
 					initial="hidden"
@@ -110,171 +155,192 @@ const PlansPage = () => {
 				</motion.dl>
 			)}
 
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-				<div className="sm:w-64">
-					<DateRangePicker
-						value={range}
-						onChange={setRange}
-						presets={[
-							{ label: "Ближайший месяц", range: { from: todayIso(), to: addDays(todayIso(), 30) } },
-							{
-								label: "−30 / +60 дней",
-								range: { from: addDays(todayIso(), -30), to: addDays(todayIso(), 60) },
-							},
-							{ label: "Квартал вперёд", range: { from: todayIso(), to: addDays(todayIso(), 92) } },
-						]}
-					/>
-				</div>
-				<Segmented
-					value={show}
-					onChange={setShow}
-					label="Показать"
-					options={[
-						{ value: "open", label: "Открытые" },
-						{ value: "all", label: "Все" },
-					]}
-				/>
-			</div>
-
-			{isLoading ? (
-				<div className="flex flex-col gap-2">
-					{Array.from({ length: 4 }, (_, i) => (
-						<Skeleton
-							key={i}
-							className="h-24 rounded-xl"
+			{view === "list" && (
+				<>
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+						<div className="sm:w-64">
+							<DateRangePicker
+								value={range}
+								onChange={setRange}
+								presets={[
+									{
+										label: "Ближайший месяц",
+										range: { from: todayIso(), to: addDays(todayIso(), 30) },
+									},
+									{
+										label: "−30 / +60 дней",
+										range: { from: addDays(todayIso(), -30), to: addDays(todayIso(), 60) },
+									},
+									{
+										label: "Квартал вперёд",
+										range: { from: todayIso(), to: addDays(todayIso(), 92) },
+									},
+								]}
+							/>
+						</div>
+						<Segmented
+							value={show}
+							onChange={setShow}
+							label="Показать"
+							options={[
+								{ value: "open", label: "Открытые" },
+								{ value: "all", label: "Все" },
+							]}
 						/>
-					))}
-				</div>
-			) : error ? (
-				<Card>
-					<ErrorState
-						error={error}
-						onRetry={refetch}
-					/>
-				</Card>
-			) : items.length === 0 ? (
-				<Card>
-					<EmptyState
-						icon={<CalendarClock />}
-						title="Планов в этом периоде нет"
-						text="Добавьте налог, аренду, зарплату или ожидаемую оплату — и прогноз станет точнее."
-					/>
-				</Card>
-			) : (
-				<motion.ul
-					layout
-					className="flex flex-col gap-2"
-				>
-					<AnimatePresence initial={false}>
-						{items.map((p) => {
-							const total = toNumber(p.amount) ?? 0;
-							const settled = toNumber(p.settledAmount) ?? 0;
-							const st = PLAN_STATUS_LABEL[p.status];
-							const open = p.status === "OPEN" || p.status === "PARTIALLY_SETTLED";
-							return (
-								<motion.li
-									key={p.id}
-									layout
-									variants={fadeUp}
-									initial="hidden"
-									animate="show"
-									exit={{ opacity: 0, height: 0, transition: tween.exit }}
-								>
-									<Card
-										className={cn(
-											"flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5",
-											p.overdue && "ring-1 ring-danger-border"
-										)}
-									>
-										<div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:flex-1">
-											<div className="flex w-14 shrink-0 flex-col items-center rounded-md bg-muted py-1.5">
-												<span className="font-display text-lg leading-tight font-semibold">
-													{p.dueDate.slice(8)}
-												</span>
-												<span className="text-[11px] text-muted-foreground">
-													{formatDayShort(p.dueDate).split(" ")[1]}
-												</span>
-											</div>
-											<div className="min-w-0 flex-1">
-												<div className="flex flex-wrap items-center gap-2">
-													<span className="truncate font-semibold">{p.title}</span>
-													<Status tone={p.overdue ? "danger" : st.tone}>
-														{p.overdue ? "Просрочен" : st.label}
-													</Status>
-												</div>
-												<div className="truncate text-xs text-muted-foreground">
-													{names(p.categoryCode)} · {PLAN_SOURCE_LABEL[p.source]}
-													{p.counterpartyKey ? ` · ${p.counterpartyKey}` : ""} ·{" "}
-													{open ? formatRelativeDays(p.dueDate) : formatDay(p.dueDate)}
-												</div>
-												{p.note && (
-													<div className="truncate text-xs text-subtle-foreground">
-														{p.note}
-													</div>
+					</div>
+
+					{isLoading ? (
+						<div className="flex flex-col gap-2">
+							{Array.from({ length: 4 }, (_, i) => (
+								<Skeleton
+									key={i}
+									className="h-24 rounded-xl"
+								/>
+							))}
+						</div>
+					) : error ? (
+						<Card>
+							<ErrorState
+								error={error}
+								onRetry={refetch}
+							/>
+						</Card>
+					) : items.length === 0 ? (
+						<Card>
+							<EmptyState
+								icon={<CalendarClock />}
+								title="Планов в этом периоде нет"
+								text="Добавьте налог, аренду, зарплату или ожидаемую оплату — и прогноз станет точнее."
+							/>
+						</Card>
+					) : (
+						<motion.ul
+							layout
+							className="flex flex-col gap-2"
+						>
+							<AnimatePresence initial={false}>
+								{items.map((p) => {
+									const total = toNumber(p.amount) ?? 0;
+									const settled = toNumber(p.settledAmount) ?? 0;
+									const st = PLAN_STATUS_LABEL[p.status];
+									const open = p.status === "OPEN" || p.status === "PARTIALLY_SETTLED";
+									return (
+										<motion.li
+											key={p.id}
+											layout
+											variants={fadeUp}
+											initial="hidden"
+											animate="show"
+											exit={{ opacity: 0, height: 0, transition: tween.exit }}
+										>
+											<Card
+												className={cn(
+													"flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5",
+													p.overdue && "ring-1 ring-danger-border"
 												)}
-											</div>
-										</div>
-										<div className="flex w-full flex-col gap-1.5 sm:w-56">
-											<div className="flex items-baseline justify-between gap-2">
-												<span
-													className={cn(
-														"font-display font-semibold tabular-nums",
-														p.direction === "IN" && "text-success-soft-foreground"
-													)}
-												>
-													{p.direction === "IN" ? "+" : "−"}
-													{formatMoney(p.amount)}
-												</span>
-												{settled > 0 && (
-													<span className="text-xs text-muted-foreground">
-														оплачено {formatMoney(p.settledAmount)}
-													</span>
-												)}
-											</div>
-											<Progress
-												value={total > 0 ? settled / total : 0}
-												tone={p.status === "SETTLED" ? "lime" : "brand"}
-											/>
-										</div>
-										<div className="flex shrink-0 flex-wrap gap-1">
-											<Button
-												size="sm"
-												variant="quiet"
-												onClick={() => {
-													setAllocFor(p);
-													setAllocOpen(true);
-												}}
 											>
-												<Link2 />
-												Оплаты
-											</Button>
-											{canEdit && open && (
-												<>
+												<div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:flex-1">
+													<div className="flex w-14 shrink-0 flex-col items-center rounded-md bg-muted py-1.5">
+														<span className="font-display text-lg leading-tight font-semibold">
+															{p.dueDate.slice(8)}
+														</span>
+														<span className="text-[11px] text-muted-foreground">
+															{formatDayShort(p.dueDate).split(" ")[1]}
+														</span>
+													</div>
+													<div className="min-w-0 flex-1">
+														<div className="flex flex-wrap items-center gap-2">
+															<span className="truncate font-semibold">{p.title}</span>
+															<Status tone={p.overdue ? "danger" : st.tone}>
+																{p.overdue ? "Просрочен" : st.label}
+															</Status>
+															<SourceBadge doc={p.sourceDocument} />
+														</div>
+														<div className="truncate text-xs text-muted-foreground">
+															{names(p.categoryCode)} · {PLAN_SOURCE_LABEL[p.source]}
+															{p.counterpartyKey ? ` · ${p.counterpartyKey}` : ""} ·{" "}
+															{open
+																? formatRelativeDays(p.dueDate)
+																: formatDay(p.dueDate)}
+														</div>
+														{p.note && (
+															<div className="truncate text-xs text-subtle-foreground">
+																{p.note}
+															</div>
+														)}
+													</div>
+												</div>
+												<div className="flex w-full flex-col gap-1.5 sm:w-56">
+													<div className="flex items-baseline justify-between gap-2">
+														<span
+															className={cn(
+																"font-display font-semibold tabular-nums",
+																p.direction === "IN" && "text-success-soft-foreground"
+															)}
+														>
+															{p.direction === "IN" ? "+" : "−"}
+															{formatMoney(p.amount)}
+														</span>
+														{settled > 0 && (
+															<span className="text-xs text-muted-foreground">
+																оплачено {formatMoney(p.settledAmount)}
+															</span>
+														)}
+													</div>
+													<Progress
+														value={total > 0 ? settled / total : 0}
+														tone={p.status === "SETTLED" ? "lime" : "brand"}
+													/>
+												</div>
+												<div className="flex shrink-0 flex-wrap gap-1">
 													<Button
 														size="sm"
-														variant="ghost"
+														variant="quiet"
 														onClick={() => {
-															setEditing(p);
-															setFormOpen(true);
+															setAllocFor(p);
+															setAllocOpen(true);
 														}}
 													>
-														<Pencil />
-														Изменить
+														<Link2 />
+														Оплаты
 													</Button>
-													<CancelPlanButton
-														companyId={companyId}
-														accountId={accountId}
-														plan={p}
-													/>
-												</>
-											)}
-										</div>
-									</Card>
-								</motion.li>
-							);
-						})}
-					</AnimatePresence>
-				</motion.ul>
+													{canEdit && open && isBitrixPlan(p.sourceDocument) && (
+														<span
+															className="flex max-w-48 items-center px-2 text-xs text-muted-foreground"
+															title="План создаёт синхронизация с Битрикс24. Ручные правки она перезапишет, а отмену — вернёт, пока сделка открыта."
+														>
+															Меняется в Битрикс24
+														</span>
+													)}
+													{canEdit && open && !isBitrixPlan(p.sourceDocument) && (
+														<>
+															<Button
+																size="sm"
+																variant="ghost"
+																onClick={() => {
+																	setEditing(p);
+																	setFormOpen(true);
+																}}
+															>
+																<Pencil />
+																Изменить
+															</Button>
+															<CancelPlanButton
+																companyId={companyId}
+																accountId={accountId}
+																plan={p}
+															/>
+														</>
+													)}
+												</div>
+											</Card>
+										</motion.li>
+									);
+								})}
+							</AnimatePresence>
+						</motion.ul>
+					)}
+				</>
 			)}
 
 			<PlanFormDialog
@@ -283,6 +349,7 @@ const PlansPage = () => {
 				companyId={companyId}
 				accountId={accountId}
 				plan={editing}
+				preset={preset}
 			/>
 			{allocFor && (
 				<AllocationsDialog

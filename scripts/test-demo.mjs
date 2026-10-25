@@ -407,6 +407,48 @@ try {
 	await get(fresh, "PUT", { name: "Изменённый счёт" }, { "If-Match": '"0"' });
 	await get(`${fresh}/archive`, "POST", {}, { "If-Match": '"1"' });
 	await get(`/api/v1/orchestrator/companies/${createdCompany.id}/archive`, "POST", {}, { "If-Match": '"1"' });
+	const preview = await get(`${account}/integrations/bitrix24/sync`, "POST", { mode: "DEMO", dryRun: true });
+	check(preview.dryRun && preview.created > 0 && !preview.dataChanged, "Bitrix preview must not change data");
+	check((await get(`${account}/integrations/bitrix24`)).activePlans === 0, "Preview must not create plans");
+	const synced = await get(`${account}/integrations/bitrix24/sync`, "POST", { mode: "DEMO" });
+	check(synced.dataChanged && synced.created === preview.created, "Bitrix sync must create planned items");
+	const again = await get(`${account}/integrations/bitrix24/sync`, "POST", { mode: "DEMO" });
+	check(!again.dataChanged && again.unchanged === synced.created, "Second Bitrix sync must be a no-op");
+	check(
+		(await get(`${account}/expected-payments?from=${day}&to=${addDays(day, 60)}`)).items.some(
+			(plan) => plan.sourceDocument?.externalSystem === "BITRIX24"
+		),
+		"Bitrix plans must carry sourceDocument"
+	);
+	check((await get(`${company}/tax-calendar?year=2026`)).items.length > 0, "Tax calendar must have items");
+	const calendar = await get(`${account}/payment-calendar?fromDate=${day}&toDate=${addDays(day, 29)}`);
+	check(calendar.days.length === 30, "Payment calendar must include every date");
+	check(
+		(await response(`${account}/payment-calendar?fromDate=${day}&toDate=${addDays(day, 400)}`)).status === 422,
+		"Range over 366 days must fail"
+	);
+	const employee = await get(
+		`${company}/employees`,
+		"POST",
+		{ fullName: "Тест Тестов" },
+		{ "Idempotency-Key": "employee-test-1" }
+	);
+	const salaried = await get(
+		`${company}/employees/${employee.id}/salary`,
+		"PUT",
+		{
+			accountId: config.DEMO_ACCOUNT_ID,
+			amount: "85000.50",
+			counterpartyName: "Тест Тестов",
+			schedule: { frequency: "MONTHLY", weekday: null, dayOfMonth: 10, businessDayRule: "FOLLOWING" },
+		},
+		{ "If-Match": '"1"' }
+	);
+	check(salaried.recurringPayment.employeePayment && salaried.version === 2, "Salary must link a payment");
+	check(
+		(await response(`${company}/employees/${employee.id}/archive`, "POST", {})).status === 428,
+		"Archive without If-Match must fail"
+	);
 	const controller = new AbortController();
 	controller.abort();
 	await assert.rejects(
