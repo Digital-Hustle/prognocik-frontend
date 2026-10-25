@@ -12,6 +12,7 @@ import { addDays, formatDayShort, todayIso } from "@/shared/lib/date/date";
 import { formatMoney } from "@/shared/lib/format/money";
 import { plural } from "@/shared/lib/format/plural";
 import { useDebounce } from "@/shared/lib/hooks/useDebounce/useDebounce";
+import { useMediaQuery } from "@/shared/lib/hooks/useMediaQuery/useMediaQuery";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card } from "@/shared/ui/Card/Card";
 import { DateRangePicker } from "@/shared/ui/DatePicker/DatePicker";
@@ -71,6 +72,7 @@ const Checkbox = ({ checked, onChange, label }: { checked: boolean; onChange: ()
 );
 
 export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: PaymentsTableProps) => {
+	const wide = useMediaQuery("(min-width: 768px)");
 	const end = dataEnd ?? todayIso();
 	const [range, setRange] = useState<DateRange>({ from: addDays(end, -90), to: end });
 	useEffect(() => {
@@ -214,6 +216,104 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: P
 						title="Операций не найдено"
 						text="Измените период или фильтры. Если выписка ещё не загружена — начните с раздела «Выписки»."
 					/>
+				) : !wide ? (
+					<ul className="divide-y divide-border border-t border-border">
+						{canEdit && (
+							<li className="flex items-center gap-3 px-4 py-2.5 text-xs text-muted-foreground">
+								<Checkbox
+									checked={allOnPage}
+									label="Выбрать все на странице"
+									onChange={() =>
+										setSelected((prev) => {
+											const next = new Map(prev);
+											if (allOnPage) items.forEach((p) => next.delete(p.id));
+											else items.forEach((p) => p.status === "ACTIVE" && next.set(p.id, p));
+											return next;
+										})
+									}
+								/>
+								Выбрать все на странице
+							</li>
+						)}
+						{items.map((p) => (
+							<li
+								key={p.id}
+								className={cn(
+									"flex gap-3 px-4 py-3",
+									selected.has(p.id) && "bg-accent",
+									p.status === "VOIDED" && "opacity-50"
+								)}
+							>
+								{canEdit && (
+									<div className="pt-0.5">
+										{p.status === "ACTIVE" ? (
+											<Checkbox
+												checked={selected.has(p.id)}
+												label="Выбрать операцию"
+												onChange={() => toggle(p)}
+											/>
+										) : (
+											<span className="block size-5" />
+										)}
+									</div>
+								)}
+								<div className="min-w-0 flex-1">
+									<div className="flex items-start justify-between gap-3">
+										<div className="min-w-0">
+											<div className="truncate text-sm font-medium">
+												{p.counterpartyName ?? "Без контрагента"}
+											</div>
+											<div className="text-xs text-muted-foreground">
+												{formatDayShort(p.operationDate)}
+												{p.dayStatus === "MISSING" && (
+													<span className="text-warning"> · день неполный</span>
+												)}
+											</div>
+										</div>
+										<div className="shrink-0 text-right text-sm">
+											<DirectionAmount
+												amount={p.amount}
+												direction={p.direction}
+											/>
+											{p.status === "VOIDED" && (
+												<div>
+													<Status tone="neutral">аннулирована</Status>
+												</div>
+											)}
+										</div>
+									</div>
+									<div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+										{p.counterpartyInn ? `ИНН ${p.counterpartyInn} · ` : ""}
+										{p.purpose ?? "—"}
+									</div>
+									<div className="mt-2 flex items-center justify-between gap-2">
+										<div className="min-w-0 flex-1">
+											{canEdit ? (
+												<PaymentCategoryCell
+													companyId={companyId}
+													accountId={accountId}
+													payment={p}
+												/>
+											) : (
+												<span className="text-xs">{names(p.categoryCode)}</span>
+											)}
+										</div>
+										{canEdit && (
+											<ManualPaymentActions
+												companyId={companyId}
+												payment={p}
+											/>
+										)}
+									</div>
+									{p.balanceEod !== null && (
+										<div className="mt-1 text-xs text-subtle-foreground">
+											Остаток на конец дня {formatMoney(p.balanceEod)}
+										</div>
+									)}
+								</div>
+							</li>
+						))}
+					</ul>
 				) : (
 					<div className="overflow-x-auto">
 						<table className="w-full min-w-[760px] text-sm">

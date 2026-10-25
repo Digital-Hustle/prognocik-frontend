@@ -19,7 +19,7 @@ export const Stat = memo(({ label, value, sub, icon, tone = "plain", className }
 	<motion.div
 		variants={popIn}
 		className={cn(
-			"relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-xl px-5 py-5 shadow-card sm:px-6",
+			"relative flex min-w-0 flex-col gap-1 overflow-hidden rounded-xl px-4 py-4 shadow-card sm:px-6 sm:py-5",
 			tone === "plain" && "bg-card",
 			tone === "hero" && "bg-hero text-hero-foreground shadow-float",
 			tone === "danger" && "bg-danger-soft text-danger-soft-foreground",
@@ -35,14 +35,14 @@ export const Stat = memo(({ label, value, sub, icon, tone = "plain", className }
 		)}
 		<dt
 			className={cn(
-				"relative flex items-center gap-2 truncate text-sm [&_svg]:size-4",
+				"relative flex items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0",
 				tone === "hero" ? "text-hero-muted" : tone === "plain" ? "text-muted-foreground" : "opacity-80"
 			)}
 		>
 			{icon}
 			{label}
 		</dt>
-		<dd className="relative truncate font-display text-2xl font-semibold tracking-display tabular-nums sm:text-3xl">
+		<dd className="relative font-display text-xl font-semibold tracking-display break-words tabular-nums sm:text-3xl">
 			{value}
 		</dd>
 		{sub && (

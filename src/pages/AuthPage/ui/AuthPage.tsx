@@ -24,7 +24,7 @@ const AuthPage = () => {
 				variants={stagger(0.08)}
 				initial="hidden"
 				animate="show"
-				className="relative isolate flex flex-col justify-between gap-8 overflow-hidden rounded-2xl bg-hero p-6 text-hero-foreground shadow-float sm:p-10"
+				className="relative isolate flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-hero p-5 text-hero-foreground shadow-float sm:gap-8 sm:p-10"
 			>
 				<Aurora
 					tone="hero"
@@ -40,17 +40,20 @@ const AuthPage = () => {
 				<div className="flex flex-col gap-6">
 					<motion.h1
 						variants={fadeUp}
-						className="max-w-xl font-display text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl"
+						className="max-w-xl font-display text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl"
 					>
 						Узнайте о&nbsp;кассовом разрыве <span className="text-lime">до&nbsp;того</span>, как он случится
 					</motion.h1>
-					<motion.div variants={fadeUp}>
+					<motion.div
+						variants={fadeUp}
+						className="hidden sm:block"
+					>
 						<HeroChart />
 					</motion.div>
 				</div>
 				<motion.ul
 					variants={stagger(0.06, 0.4)}
-					className="grid gap-3 sm:grid-cols-3"
+					className="hidden gap-3 sm:grid sm:grid-cols-3"
 				>
 					{POINTS.map(({ icon: Icon, title, text }) => (
 						<motion.li
@@ -66,14 +69,14 @@ const AuthPage = () => {
 				</motion.ul>
 			</motion.section>
 
-			<section className="flex flex-col items-center justify-center gap-6 py-6">
+			<section className="flex flex-col items-center justify-center gap-5 py-2 sm:gap-6 sm:py-6">
 				<motion.div
 					variants={fadeUp}
 					initial="hidden"
 					animate="show"
 					className="w-full max-w-md"
 				>
-					<Card className="p-6 sm:p-8">
+					<Card className="p-5 sm:p-8">
 						<h2 className="mb-1 font-display text-2xl font-semibold">Вход</h2>
 						<p className="mb-6 text-sm text-muted-foreground">
 							Для владельцев и бухгалтеров малого бизнеса — без паролей
