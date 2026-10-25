@@ -137,14 +137,22 @@ const Inner = ({ companyId, accountId, forecast, onResult, onSaveExpense, canSav
 	const [keepBuffer, setKeepBuffer] = useState(false);
 	const [maxPay, setMaxPay] = useState<MaxPayment | null>(null);
 	const [payError, setPayError] = useState<string | null>(null);
+	const paySeq = useRef(0);
+	useEffect(() => {
+		++paySeq.current;
+		setMaxPay(null);
+		setPayError(null);
+	}, [companyId, accountId, forecast.id, payDate, keepBuffer, changes]);
 	const askMax = async () => {
 		setPayError(null);
 		if (!payDate) return setPayError("Выберите дату платежа.");
+		const id = ++paySeq.current;
 		const rs = await calc({
 			companyId,
 			accountId,
 			body: { forecastId: forecast.id, date: payDate, keepBuffer, changes: changes.length ? changes : undefined },
 		});
+		if (id !== paySeq.current) return;
 		if ("error" in rs) {
 			setMaxPay(null);
 			return setPayError(problemMessage(rs.error));
@@ -243,7 +251,13 @@ const Inner = ({ companyId, accountId, forecast, onResult, onSaveExpense, canSav
 								</span>
 							</div>
 							<span className="text-xs text-muted-foreground">
-								{EFFECT_LABEL[c.type] ?? c.type}: ухудшает минимальный остаток
+								{EFFECT_LABEL[c.type] ?? c.type}:{" "}
+								{Number(c.minimumBalanceDelta) < 0
+									? "снижает"
+									: Number(c.minimumBalanceDelta) > 0
+										? "повышает"
+										: "не меняет"}{" "}
+								минимальный остаток
 								{c.movedTo ? ` · платёж сдвигается на ${formatDay(c.movedTo)}` : ""}
 								{c.droppedAmount && Number(c.droppedAmount) > 0
 									? ` · ${formatMoney(c.droppedAmount)} выходит за окно прогноза`
