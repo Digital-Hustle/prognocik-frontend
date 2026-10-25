@@ -1,13 +1,23 @@
-# Шаблон конфигурации: ${GATEWAY_URL}, ${DNS_RESOLVER}, ${MAX_UPLOAD} подставляются при старте контейнера.
+# Шаблон конфигурации: ${GATEWAY_URL}, ${DNS_RESOLVER}, ${MAX_UPLOAD}, ${TLS_CERT_FILE}, ${TLS_KEY_FILE}
+# подставляются при старте контейнера.
+#
+# 8080 — HTTP (здоровье, быстрая проверка, прод за reverse proxy).
+# 8443 — HTTPS с самоподписанным сертификатом для локального запуска: Gateway выдаёт
+#        Secure/HttpOnly-куки, они не работают на http://localhost, поэтому полный вход
+#        (код из письма, загрузка CSV) возможен только через https://localhost:8443.
+#
+# Два server-блока почти идентичны — это осознанное дублирование: include-файл потребовал бы
+# второго envsubst-прохода или map-трюков, а расхождение настроек SSL/заголовков между
+# HTTP и HTTPS всё равно планируется.
+
+# DNS Docker; адрес Gateway резолвится при запросе, поэтому фронт стартует и раньше бэкенда
+resolver ${DNS_RESOLVER} valid=10s ipv6=off;
 
 server {
     listen 8080;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
-
-    # DNS Docker; адрес Gateway резолвится при запросе, поэтому фронт стартует и раньше бэкенда
-    resolver ${DNS_RESOLVER} valid=10s ipv6=off;
     set $gateway "${GATEWAY_URL}";
 
     gzip on;
@@ -33,8 +43,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
-        # Origin и Cookie уходят как есть: Gateway проверяет их сам
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_connect_timeout 5s;
         proxy_read_timeout 300s;
         client_max_body_size ${MAX_UPLOAD};
@@ -73,6 +82,67 @@ server {
     }
 
     # SPA: любой путь отдаёт index.html (роутинг на клиенте)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+server {
+    listen 8443 ssl;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    set $gateway "${GATEWAY_URL}";
+
+    ssl_certificate ${TLS_CERT_FILE};
+    ssl_certificate_key ${TLS_KEY_FILE};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:SSL:2m;
+    ssl_session_timeout 1h;
+
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml text/plain;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location /api/ {
+        proxy_pass $gateway;
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # С HTTPS-порта схема в X-Forwarded-Proto должна быть https
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 300s;
+        client_max_body_size ${MAX_UPLOAD};
+        proxy_request_buffering off;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }

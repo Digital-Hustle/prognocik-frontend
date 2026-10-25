@@ -35,7 +35,7 @@ cd prognocik-frontend
 
 # Gateway на другом адресе (по умолчанию http://gateway:5001 внутри docker-сети)
 GATEWAY_URL=https://api.example.com docker compose up -d --build
-# → http://localhost:8080
+# → http://localhost:8080 (статика) · https://localhost:8443 (полный флоу входа)
 ```
 
 Если бэкенд поднят из `hack-2026-back` (`compose.full.yaml`) на том же сервере, подключите фронт к его внутренней сети:
@@ -52,14 +52,19 @@ docker compose -f docker-compose.yml -f docker-compose.backend.yml up -d --build
 | Переменная      | По умолчанию          | Смысл                                                                        |
 | --------------- | --------------------- | ---------------------------------------------------------------------------- |
 | `GATEWAY_URL`   | `http://gateway:5001` | Куда nginx проксирует `/api/` (без слэша в конце и без пути)                 |
-| `FRONTEND_PORT` | `8080`                | Порт на хосте                                                                |
+| `FRONTEND_PORT` | `8080`                | HTTP-порт на хосте                                                           |
+| `FRONTEND_TLS_PORT` | `8443`            | HTTPS-порт на хосте (локальный запуск; на проде за proxy можно не публиковать) |
 | `DNS_RESOLVER`  | `127.0.0.11`          | DNS, которым nginx разрешает `GATEWAY_URL` (встроенный DNS Docker)           |
 | `MAX_UPLOAD`    | `110m`                | Максимальный размер загрузки (массовые операции — до 100 МБ по гайду)        |
+| `TLS_CERT_FILE` / `TLS_KEY_FILE` | путь в контейнере | Сертификат для 8443; по умолчанию самоподписанный из образа. На проде подмените своими volume-ами |
 | `VITE_API_URL`  | пусто                 | Только при сборке: адрес Gateway, если он на другом origin (нужен CORS)      |
 | `VITE_SITE_URL` | пусто                 | Только при сборке: публичный HTTPS-адрес фронта для превью ссылок в Telegram |
 
-> **HTTPS.** Gateway выдаёт куки для HTTPS, поэтому на сервере перед контейнером нужен reverse proxy с сертификатом
-> (Caddy, nginx, Traefik). В `AUTH_ALLOWED_ORIGINS` бэкенда должен быть публичный адрес фронта — иначе Gateway отклонит
+> **HTTPS и полный вход.** Gateway выдаёт `Secure`/`HttpOnly`-куки, поэтому вход по email-коду и загрузка CSV
+> работают только по HTTPS. Для локального запуска контейнер слушает `https://localhost:8443` с самоподписанным
+> сертификатом (браузер попросит подтвердить исключение один раз). На сервере перед контейнером нужен reverse proxy
+> с нормальным сертификатом (Caddy, nginx, Traefik). В `AUTH_ALLOWED_ORIGINS` бэкенда добавьте origin фронта
+> (`https://localhost:8443` для локального запуска, публичный адрес — для прода), иначе Gateway отклонит
 > изменяющие запросы по `Origin`.
 
 Проверка состояния: `GET /healthz` → `ok` (он же используется как `HEALTHCHECK`).
