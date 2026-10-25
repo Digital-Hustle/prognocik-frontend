@@ -2,7 +2,7 @@ import { Building2, Check, ChevronDown, Landmark, Plus, Search } from "lucide-re
 import { motion } from "motion/react";
 import { memo, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
+import { companyApi, useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
 import { useWorkspace, workspaceActions } from "@/entities/Workspace";
 import { spring } from "@/shared/config/motion";
 import { RoutePath } from "@/shared/const/router";
@@ -34,6 +34,24 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 
 	const company = companies.data?.items.find((c) => c.id === companyId);
 	const account = currentAccounts.data?.items.find((a) => a.id === accountId);
+
+	/** Клик по компании сразу переключает рабочее место: один счёт — выбираем его, несколько — даём выбрать. */
+	const pickCompany = async (id: string) => {
+		setBrowseCompany(id);
+		const sub = dispatch(companyApi.endpoints.listAccounts.initiate(id));
+		try {
+			const list = await sub.unwrap();
+			const open = list.items.filter((a) => !a.archived);
+			if (open.length === 1 || (list.items.length === 1 && open.length === 0)) {
+				dispatch(workspaceActions.selectAccount({ companyId: id, accountId: (open[0] ?? list.items[0]).id }));
+				p.setOpen(false);
+			}
+		} catch {
+			/* список счетов покажет ошибку сам */
+		} finally {
+			sub.unsubscribe();
+		}
+	};
 
 	return (
 		<>
@@ -98,7 +116,7 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 							<li key={c.id}>
 								<button
 									type="button"
-									onClick={() => setBrowseCompany(c.id)}
+									onClick={() => void pickCompany(c.id)}
 									className={cn(
 										"flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface",
 										c.id === shownCompany && "bg-accent font-medium text-accent-foreground"
