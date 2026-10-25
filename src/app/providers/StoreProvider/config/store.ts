@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import type { ReducersMapObject } from "@reduxjs/toolkit";
+import { assistantReducer } from "@/entities/Assistant";
 import { userReducer } from "@/entities/User";
 import { workspaceReducer } from "@/entities/Workspace";
 import { rtkApi } from "@/shared/api/rtkApi";
@@ -11,6 +12,7 @@ export function createReduxStore(initialState?: StateSchema, asyncReducers?: Red
 		...asyncReducers,
 		user: userReducer,
 		workspace: workspaceReducer,
+		assistant: assistantReducer,
 		[rtkApi.reducerPath]: rtkApi.reducer,
 	} as ReducersMapObject<StateSchema>;
 

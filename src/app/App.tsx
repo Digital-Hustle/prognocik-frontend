@@ -5,6 +5,7 @@ import { getUserInited, userApi } from "@/entities/User";
 import { useAppDispatch } from "@/shared/lib/hooks/useAppDispatch/useAppDispatch";
 import { Aurora } from "@/shared/ui/Aurora/Aurora";
 import { Toaster } from "@/shared/ui/Toast/Toast";
+import { AssistantChat } from "@/widgets/AssistantChat";
 import { PageLoader } from "@/widgets/PageLoader";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
 			<Aurora fixed />
 			<Toaster />
 			{inited ? <AppRouter /> : <PageLoader fullscreen />}
+			{inited && <AssistantChat />}
 		</div>
 	);
 }

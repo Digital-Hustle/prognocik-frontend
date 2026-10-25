@@ -7,6 +7,7 @@ import { dataAsOfDate, useGetAccountQuery, useGetCompanyQuery } from "@/entities
 import { QUALITY_LABEL } from "@/entities/Forecast";
 import { useGetForecastSettingsQuery } from "@/entities/ForecastSettings";
 import { useWorkspace } from "@/entities/Workspace";
+import { OpenAssistantButton } from "@/features/AskAssistant";
 import { CompletenessForm } from "@/features/ConfirmCompleteness";
 import { DownloadButton } from "@/features/DownloadResult";
 import { RunBacktestForm } from "@/features/RunBacktest";
@@ -58,6 +59,14 @@ const QualityPage = () => {
 				kicker="Проверка качества"
 				title="Насколько точен прогноз"
 				sub="Прогноз проверяется временной кросс-валидацией: модель «возвращается» на прошлые даты, строит прогноз только по тому, что было известно тогда, и сравнивает с фактом."
+				actions={
+					<OpenAssistantButton
+						size="md"
+						question="Насколько можно доверять прогнозу и чего не хватает в данных?"
+					>
+						Спросить про качество
+					</OpenAssistantButton>
+				}
 			/>
 
 			<section className="flex flex-col gap-4">
