@@ -65,7 +65,7 @@ export const SalaryDialog = memo(({ open, onClose, companyId, accountId, employe
 		const p = employee.recurringPayment;
 		const id = identityFromKey(p?.counterpartyKey ?? null);
 		setAmount(p ? p.amount : "");
-		setInn(id.inn);
+		setInn(p ? id.inn : (employee.inn ?? ""));
 		setName(p ? id.name : employee.fullName);
 		setFrequency(p?.schedule.frequency ?? "MONTHLY");
 		setDayOfMonth(String(p?.schedule.dayOfMonth ?? 10));

@@ -3,6 +3,7 @@ import type { ExpectedPayment, PlanRq } from "@/entities/ExpectedPayment";
 import type { Forecast } from "@/entities/Forecast";
 import type { Job } from "@/entities/Job";
 import { addDays, diffDays } from "@/shared/lib/date/date";
+import { validateInn } from "@/shared/lib/validation/taxIds";
 import { demoBulkImport } from "./bulkImports";
 import {
 	accounts,
@@ -55,6 +56,9 @@ function required<T>(value: T | undefined | null): T {
 }
 const text = (body: Body, key: string, fallback = "") =>
 	typeof body[key] === "string" ? (body[key] as string) : fallback;
+
+/** Как на бэке: ИНН сотрудника необязателен, но если есть — только 12 цифр физлица с контрольной суммой */
+const badPersonInn = (body: Body) => Boolean(text(body, "inn")) && validateInn(text(body, "inn"), "person") !== null;
 
 function page<T>(items: T[], params: URLSearchParams) {
 	const pageNumber = Math.max(0, Number(params.get("page")) || 0),
@@ -179,12 +183,14 @@ function employeeRoute(request: Request, parts: string[], body: Body, companyId:
 			);
 		if (method === "POST") {
 			if (!text(body, "fullName").trim()) return fail(422, "VALIDATION_ERROR", "Укажите ФИО");
+			if (badPersonInn(body)) return fail(422, "VALIDATION_ERROR", "ИНН сотрудника — 12 цифр ИНН физлица");
 			const employee = {
 				id: id(),
 				companyId,
 				fullName: text(body, "fullName").trim(),
 				position: text(body, "position") || null,
 				note: text(body, "note") || null,
+				inn: text(body, "inn") || null,
 				archived: false,
 				recurringPayment: null,
 				version: 1,
@@ -207,10 +213,12 @@ function employeeRoute(request: Request, parts: string[], body: Body, companyId:
 		return json(employee);
 	};
 	if (!action && method === "PUT") {
+		if (badPersonInn(body)) return fail(422, "VALIDATION_ERROR", "ИНН сотрудника — 12 цифр ИНН физлица");
 		Object.assign(employee, {
 			fullName: text(body, "fullName").trim() || employee.fullName,
 			position: text(body, "position") || null,
 			note: text(body, "note") || null,
+			inn: text(body, "inn") || null,
 		});
 		employee.version++;
 		employee.updatedAt = now();

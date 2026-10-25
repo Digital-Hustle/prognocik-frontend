@@ -129,6 +129,10 @@ export interface Dashboard {
 	companyId: Uuid;
 	accountId: Uuid;
 	asOfDate: IsoDate;
+	/** Последний закрытый день с историей (наблюдаемый или подтверждённый пустой); null — истории нет */
+	lastDataDate?: IsoDate | null;
+	/** Дата прогноза по умолчанию: lastDataDate, без истории — asOfDate. Для архивов она в прошлом. */
+	suggestedAsOfDate?: IsoDate;
 	dataVersion: number;
 	currentBalance: { balance: Money; date: IsoDate; startBalanceDate: IsoDate } | null;
 	latestForecast: Forecast | null;

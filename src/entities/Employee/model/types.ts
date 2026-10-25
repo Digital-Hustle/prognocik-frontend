@@ -34,6 +34,8 @@ export interface Employee {
 	fullName: string;
 	position: string | null;
 	note: string | null;
+	/** ИНН физлица (12 цифр); помогает связать зарплату с получателем в выписке */
+	inn?: string | null;
 	archived: boolean;
 	recurringPayment: EmployeePayment | null;
 	version: number;
@@ -45,4 +47,5 @@ export interface EmployeeRq {
 	fullName: string;
 	position?: string | null;
 	note?: string | null;
+	inn?: string | null;
 }

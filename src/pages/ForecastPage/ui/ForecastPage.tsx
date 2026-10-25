@@ -1,21 +1,23 @@
 import { CalendarClock, FileUp, FlaskConical, Info, ListTree, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useGetDailyHistoryQuery } from "@/entities/AccountHistory";
 import { dataAsOfDate, useGetAccountQuery } from "@/entities/Company";
 import { QUALITY_LABEL, SCOPE_LABEL, useGetDashboardQuery } from "@/entities/Forecast";
-import { useWorkspace } from "@/entities/Workspace";
+import { useWorkspace, workspaceActions } from "@/entities/Workspace";
 import { DownloadButton } from "@/features/DownloadResult";
 import { PlanFormDialog } from "@/features/EditExpectedPayment";
 import { RunForecastButton } from "@/features/RunForecast";
 import { WhatIfPanel } from "@/features/WhatIfScenario";
 import type { ScenarioResult } from "@/features/WhatIfScenario";
+import { toProblem } from "@/shared/api/problem";
 import { fadeUp, motionTokens, spring, stagger, tween } from "@/shared/config/motion";
 import { RoutePath } from "@/shared/const/router";
 import { addDays, formatDayFull, formatInstant } from "@/shared/lib/date/date";
 import { formatMoney } from "@/shared/lib/format/money";
 import { formatRatio } from "@/shared/lib/format/percent";
+import { useAppDispatch } from "@/shared/lib/hooks/useAppDispatch/useAppDispatch";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
 import { Dialog } from "@/shared/ui/Dialog/Dialog";
@@ -74,6 +76,12 @@ const ForecastPage = () => {
 		{ pollingInterval: polling ? motionTokens.poll.dashboardMs : 0 }
 	);
 	const account = useGetAccountQuery({ companyId, accountId });
+	const dispatch = useAppDispatch();
+	// Выбранного счёта нет или он чужой (404) — сбрасываем выбор и отправляем выбирать заново
+	const gone = toProblem(account.error).status === 404 || toProblem(dashboard.error).status === 404;
+	useEffect(() => {
+		if (gone) dispatch(workspaceActions.reset());
+	}, [gone, dispatch]);
 	const d = dashboard.data;
 	const running = (d?.runningJobs ?? []).filter((j) => j.type === "FORECAST");
 
@@ -84,7 +92,8 @@ const ForecastPage = () => {
 	}, [hasRunning]);
 
 	// Срез для расчёта — конец данных счёта: выписки бывают историческими, а «вчера» по ним пусто
-	const runAsOf = dataAsOfDate(account.data, d?.asOfDate);
+	// Дату прогноза по умолчанию отдаёт сервер (на «вчера» для архивной выписки придёт NO_START_BALANCE)
+	const runAsOf = d?.suggestedAsOfDate ?? dataAsOfDate(account.data, d?.asOfDate);
 	const chartAsOf = d?.latestForecast?.asOfDate ?? runAsOf;
 	const history = useGetDailyHistoryQuery(
 		{ companyId, accountId, from: addDays(chartAsOf, -41), to: chartAsOf },
@@ -116,6 +125,15 @@ const ForecastPage = () => {
 			mode === "whatif" && scenario ? scenario.points.map((p) => ({ date: p.date, scenario: p.scenario })) : null,
 		[mode, scenario]
 	);
+
+	if (gone) {
+		return (
+			<Navigate
+				to={RoutePath.onboarding}
+				replace
+			/>
+		);
+	}
 
 	if (dashboard.isLoading || account.isLoading) {
 		return (
@@ -419,7 +437,20 @@ const ForecastPage = () => {
 																className="flex gap-2 text-xs text-muted-foreground"
 															>
 																<Info className="mt-0.5 size-3.5 shrink-0" />
-																{w.message}
+																<span>
+																	{w.message}
+																	{w.code === "BALANCE_MISMATCH" && (
+																		<>
+																			{" "}
+																			<Link
+																				to={RoutePath.quality}
+																				className="font-medium text-foreground underline underline-offset-2"
+																			>
+																				Где расхождения
+																			</Link>
+																		</>
+																	)}
+																</span>
 															</li>
 														))}
 													</ul>

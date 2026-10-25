@@ -4,4 +4,6 @@ import type { Uuid } from "@/shared/api/types";
 export interface WorkspaceSchema {
 	companyId: Uuid | null;
 	accountId: Uuid | null;
+	/** Чей это выбор: при входе под другим пользователем выбор сбрасывается */
+	ownerId?: Uuid | null;
 }
