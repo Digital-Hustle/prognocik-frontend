@@ -9,6 +9,8 @@ export enum AppRoutes {
 	PLANS = "plans",
 	PLAN_FACT = "plan_fact",
 	QUALITY = "quality",
+	INTEGRATIONS = "integrations",
+	EMPLOYEES = "employees",
 	SETTINGS = "settings",
 	PROFILE = "profile",
 	// последний
@@ -26,6 +28,8 @@ export const RoutePath: Record<AppRoutes, string> = {
 	[AppRoutes.PLANS]: "/plans",
 	[AppRoutes.PLAN_FACT]: "/plan-fact",
 	[AppRoutes.QUALITY]: "/quality",
+	[AppRoutes.INTEGRATIONS]: "/integrations",
+	[AppRoutes.EMPLOYEES]: "/employees",
 	[AppRoutes.SETTINGS]: "/settings",
 	[AppRoutes.PROFILE]: "/profile",
 	[AppRoutes.NOT_FOUND]: "*",
