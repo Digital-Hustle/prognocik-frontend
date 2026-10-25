@@ -63,7 +63,7 @@ const BarList = ({ rows, direction }: { rows: Row[]; direction: Direction }) => 
 							aria-hidden
 							className={cn(
 								"absolute inset-y-0 left-0 rounded-md",
-								direction === "IN" ? "bg-success-soft" : "bg-surface"
+								direction === "IN" ? "bg-success-soft" : "bg-danger-soft"
 							)}
 							initial={{ width: 0 }}
 							animate={{ width: `${Math.min(100, Math.max(1, r.share))}%` }}
@@ -78,10 +78,25 @@ const BarList = ({ rows, direction }: { rows: Row[]; direction: Direction }) => 
 								</div>
 							</div>
 							<div className="text-right">
-								<div className="font-display text-sm font-semibold whitespace-nowrap tabular-nums">
+								<div
+									className={cn(
+										"font-display text-sm font-semibold whitespace-nowrap tabular-nums",
+										direction === "IN"
+											? "text-success-soft-foreground"
+											: "text-danger-soft-foreground"
+									)}
+								>
+									{direction === "IN" ? "+" : "−"}
 									{formatMoney(r.amount)}
 								</div>
-								<div className="text-xs text-muted-foreground tabular-nums">
+								<div
+									className={cn(
+										"text-xs tabular-nums",
+										direction === "IN"
+											? "text-success-soft-foreground"
+											: "text-danger-soft-foreground"
+									)}
+								>
 									{r.share.toFixed(1).replace(".", ",")}%
 								</div>
 							</div>
@@ -225,10 +240,10 @@ export const SpendingAnalytics = memo(({ companyId, accountId, dataEnd }: Spendi
 							return (
 								<Stat
 									key={d}
-									tone={d === "IN" ? "hero" : "plain"}
+									tone={d === "IN" ? "hero" : "danger"}
 									icon={d === "IN" ? <ArrowDownLeft /> : <ArrowUpRight />}
 									label={d === "IN" ? "Поступило" : "Списано"}
-									value={formatMoney(t?.amount ?? "0.00")}
+									value={`${d === "IN" ? "+" : "−"}${formatMoney(t?.amount ?? "0.00")}`}
 									sub={`${t?.paymentCount ?? 0} ${plural(t?.paymentCount ?? 0, "операция", "операции", "операций")}`}
 								/>
 							);
@@ -239,8 +254,20 @@ export const SpendingAnalytics = memo(({ companyId, accountId, dataEnd }: Spendi
 						{directions.map((d) => (
 							<Card key={d}>
 								<CardHeader>
-									<CardTitle>
-										{d === "IN" ? "Откуда приходят деньги" : "Куда уходят деньги"}
+									<CardTitle className="flex items-center gap-2">
+										<span
+											className={cn(
+												"flex size-7 shrink-0 items-center justify-center rounded-sm [&_svg]:size-4",
+												d === "IN"
+													? "bg-success-soft text-success-soft-foreground"
+													: "bg-danger-soft text-danger-soft-foreground"
+											)}
+										>
+											{d === "IN" ? <ArrowDownLeft /> : <ArrowUpRight />}
+										</span>
+										<span className="truncate">
+											{d === "IN" ? "Откуда приходят деньги" : "Куда уходят деньги"}
+										</span>
 									</CardTitle>
 								</CardHeader>
 								{rows[d].length === 0 ? (

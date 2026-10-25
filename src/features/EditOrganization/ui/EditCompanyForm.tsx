@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import type { Company, CompanyRq, LegalForm } from "@/entities/Company";
 import { LEGAL_FORM_LABEL } from "@/entities/Company";
 import { problemMessage, toProblem } from "@/shared/api/problem";
+import { validateInn, validateKpp } from "@/shared/lib/validation/taxIds";
 import { Button } from "@/shared/ui/Button/Button";
 import { Field, Input } from "@/shared/ui/Input/Input";
 import { Segmented } from "@/shared/ui/Segmented/Segmented";
@@ -24,8 +25,10 @@ export const EditCompanyForm = memo(({ company, disabled }: { company: Company; 
 		e.preventDefault();
 		const next: Record<string, string> = {};
 		if (!name.trim()) next.name = "Укажите название";
-		if (inn && !/^(\d{10}|\d{12})$/.test(inn)) next.inn = "ИНН — 10 цифр для организации или 12 для ИП";
-		if (kpp && !/^\d{9}$/.test(kpp)) next.kpp = "КПП — 9 цифр";
+		const innError = validateInn(inn, legalForm === "IP" ? "person" : legalForm === "OOO" ? "legal" : "any");
+		if (innError) next.inn = innError;
+		const kppError = legalForm === "IP" ? null : validateKpp(kpp);
+		if (kppError) next.kpp = kppError;
 		setErrors(next);
 		if (Object.keys(next).length) return;
 
@@ -94,7 +97,14 @@ export const EditCompanyForm = memo(({ company, disabled }: { company: Company; 
 							<Input
 								inputMode="numeric"
 								value={kpp}
-								onChange={(e) => setKpp(e.target.value.replace(/\D/g, "").slice(0, 9))}
+								onChange={(e) =>
+									setKpp(
+										e.target.value
+											.replace(/[^0-9a-zA-Z]/g, "")
+											.toUpperCase()
+											.slice(0, 9)
+									)
+								}
 							/>
 						</Field>
 					)}

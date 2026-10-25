@@ -8,11 +8,9 @@ import { IntegrationsPage } from "@/pages/IntegrationsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { OperationsPage } from "@/pages/OperationsPage";
-import { PlanFactPage } from "@/pages/PlanFactPage";
 import { PlansPage } from "@/pages/PlansPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { QualityPage } from "@/pages/QualityPage";
-import { RecurringPage } from "@/pages/RecurringPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AppRoutes, RoutePath } from "@/shared/const/router";
 import type { AppRoutesProps } from "@/shared/types/router";
@@ -64,13 +62,6 @@ export const routeConfig: Record<AppRoutes, AppRoutesProps> = {
 		workspaceOnly: true,
 		withLayout: true,
 	},
-	[AppRoutes.RECURRING]: {
-		path: RoutePath.recurring,
-		element: <RecurringPage />,
-		authOnly: true,
-		workspaceOnly: true,
-		withLayout: true,
-	},
 	[AppRoutes.PLANS]: {
 		path: RoutePath.plans,
 		element: <PlansPage />,
@@ -80,10 +71,13 @@ export const routeConfig: Record<AppRoutes, AppRoutesProps> = {
 	},
 	[AppRoutes.PLAN_FACT]: {
 		path: RoutePath.plan_fact,
-		element: <PlanFactPage />,
+		element: (
+			<Navigate
+				to={`${RoutePath.plans}?view=fact`}
+				replace
+			/>
+		),
 		authOnly: true,
-		workspaceOnly: true,
-		withLayout: true,
 	},
 	[AppRoutes.QUALITY]: {
 		path: RoutePath.quality,

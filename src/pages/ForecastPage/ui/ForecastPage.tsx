@@ -29,6 +29,7 @@ import { Status } from "@/shared/ui/Status/Status";
 import { AlertsPanel } from "@/widgets/AlertsPanel";
 import { ForecastChart, ForecastChartLegend } from "@/widgets/ForecastChart";
 import { ForecastOverview } from "@/widgets/ForecastOverview";
+import { RecurringPanel } from "@/widgets/RecurringPanel";
 import { TraceTimeline } from "@/widgets/TraceTimeline";
 import { UpcomingPayments } from "@/widgets/UpcomingPayments";
 
@@ -466,6 +467,17 @@ const ForecastPage = () => {
 								}
 							/>
 						</motion.div>
+					</motion.div>
+
+					<motion.div
+						variants={fadeUp}
+						initial="hidden"
+						animate="show"
+					>
+						<RecurringPanel
+							companyId={companyId}
+							accountId={accountId}
+						/>
 					</motion.div>
 				</>
 			)}

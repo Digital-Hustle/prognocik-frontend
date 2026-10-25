@@ -136,7 +136,7 @@ const EmployeesPage = () => {
 								key={e.id}
 								variants={fadeUp}
 							>
-								<Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+								<Card className="flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-center lg:gap-5">
 									<div className="min-w-0 flex-1">
 										<div className="flex flex-wrap items-center gap-2">
 											<span className="truncate font-semibold">{e.fullName}</span>
@@ -154,7 +154,7 @@ const EmployeesPage = () => {
 											{e.note ? ` · ${e.note}` : ""}
 										</div>
 									</div>
-									<div className="shrink-0 sm:w-64 sm:text-right">
+									<div className="shrink-0 lg:w-64 lg:text-right">
 										{p ? (
 											<>
 												<div className="font-display font-semibold tabular-nums">
