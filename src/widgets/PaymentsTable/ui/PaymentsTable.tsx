@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { CATEGORY_SOURCE_LABEL, DirectionAmount, useCategoryNames, useListPaymentsQuery } from "@/entities/Payment";
 import type { Payment } from "@/entities/Payment";
 import { BulkCategoryBar, CategorySelect, PaymentCategoryCell } from "@/features/ChangePaymentCategory";
+import { ManualPaymentActions } from "@/features/ManualPayment";
 import type { Direction } from "@/shared/api/types";
 import { fadeUp, tween } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
@@ -241,7 +242,12 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: P
 									<th className="px-3 py-2.5 font-medium">Контрагент и назначение</th>
 									<th className="w-60 px-3 py-2.5 font-medium">Категория</th>
 									<th className="px-3 py-2.5 text-right font-medium">Сумма</th>
-									<th className="px-3 py-2.5 pr-4 text-right font-medium sm:pr-5">Остаток</th>
+									<th className="px-3 py-2.5 text-right font-medium">Остаток</th>
+									{canEdit && (
+										<th className="w-24 py-2.5 pr-4 sm:pr-5">
+											<span className="sr-only">Действия</span>
+										</th>
+									)}
 								</tr>
 							</thead>
 							<motion.tbody
@@ -311,9 +317,17 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: P
 												</div>
 											)}
 										</td>
-										<td className="px-3 py-2.5 pr-4 text-right whitespace-nowrap text-muted-foreground tabular-nums sm:pr-5">
+										<td className="px-3 py-2.5 text-right whitespace-nowrap text-muted-foreground tabular-nums">
 											{p.balanceEod !== null ? formatMoney(p.balanceEod) : "—"}
 										</td>
+										{canEdit && (
+											<td className="py-2 pr-3 sm:pr-4">
+												<ManualPaymentActions
+													companyId={companyId}
+													payment={p}
+												/>
+											</td>
+										)}
 									</tr>
 								))}
 							</motion.tbody>
