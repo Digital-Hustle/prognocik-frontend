@@ -168,7 +168,7 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: P
 							icon={<Search />}
 							value={q}
 							onChange={(e) => setQ(e.target.value)}
-							placeholder="Контрагент, ИНН или назначение"
+							placeholder="Контрагент, ИНН, назначение или сумма"
 						/>
 					</div>
 					{category && (

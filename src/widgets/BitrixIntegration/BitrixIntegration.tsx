@@ -10,7 +10,7 @@ import { RunForecastButton } from "@/features/RunForecast";
 import { BitrixSyncPanel, BitrixSyncResult } from "@/features/SyncBitrix24";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { RoutePath } from "@/shared/const/router";
-import { formatInstant } from "@/shared/lib/date/date";
+import { addDays, formatInstant } from "@/shared/lib/date/date";
 import { formatMoney } from "@/shared/lib/format/money";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
@@ -116,6 +116,7 @@ export const BitrixIntegration = ({ companyId, accountId }: { companyId: string;
 							companyId={companyId}
 							accountId={accountId}
 							status={s}
+							fromDate={addDays(runAsOf, 1)}
 							canSync={canSync}
 							onReport={setReport}
 						/>

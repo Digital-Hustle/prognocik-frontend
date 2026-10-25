@@ -70,12 +70,13 @@ export function demoBitrixStatus(data: AccountData) {
 
 /** Демо-синхронизация: повторный запуск ничего не меняет, один документ «выигран» и пропускается */
 export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSyncRq): BitrixSyncReport {
+	const start = rq.fromDate ?? closedDay;
 	const horizon = rq.horizonDays ?? 30;
 	const dryRun = Boolean(rq.dryRun);
 	const items: BitrixSyncItem[] = [];
 	const rows = DEALS.filter((x) => (x.kind === "DEAL" ? rq.includeDeals !== false : rq.includeInvoices !== false));
 	for (const x of rows) {
-		const dueDate = addDays(closedDay, x.days);
+		const dueDate = addDays(start, x.days);
 		const weight = rq.weightByProbability && x.p ? x.p / 100 : 1;
 		const planAmount = amount(BigInt(Math.round(Number(cents(x.sum)) * weight)));
 		const base = {
@@ -140,7 +141,7 @@ export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSy
 		title: "Монтаж линии — ООО «Альфа»",
 		documentAmount: "1200000.00",
 		planAmount: null,
-		dueDate: addDays(closedDay, -3),
+		dueDate: addDays(start, -3),
 		stage: "WON",
 		probability: 100,
 		action: "SKIPPED",
@@ -153,8 +154,8 @@ export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSy
 		mode: rq.mode ?? "LIVE",
 		portal: "demo.bitrix24.ru",
 		dryRun,
-		from: closedDay,
-		to: addDays(closedDay, horizon),
+		from: start,
+		to: addDays(start, horizon),
 		fetched: items.length,
 		created: count("CREATED"),
 		updated: count("UPDATED"),

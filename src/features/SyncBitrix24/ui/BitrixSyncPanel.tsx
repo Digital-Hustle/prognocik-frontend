@@ -14,6 +14,8 @@ interface Props {
 	companyId: string;
 	accountId: string;
 	status: BitrixStatus | undefined;
+	/** Начало окна: день после последних данных счёта, чтобы планы попали в прогноз */
+	fromDate: string;
 	canSync: boolean;
 	onReport: (report: BitrixSyncReport) => void;
 }
@@ -24,7 +26,7 @@ type Run = "preview" | "sync" | "demo";
  * Параметры синхронизации. Адрес вебхука — секрет: поле type=password, живёт только в состоянии этого компонента,
  * не пишется в storage, URL, логи и тосты, а сервер его тоже не сохраняет.
  */
-export const BitrixSyncPanel = memo(({ companyId, accountId, status, canSync, onReport }: Props) => {
+export const BitrixSyncPanel = memo(({ companyId, accountId, status, fromDate, canSync, onReport }: Props) => {
 	const [sync, state] = useSyncBitrixMutation();
 	const [webhook, setWebhook] = useState("");
 	const [horizon, setHorizon] = useState<number>(30);
@@ -47,6 +49,7 @@ export const BitrixSyncPanel = memo(({ companyId, accountId, status, canSync, on
 		const body: BitrixSyncRq = {
 			mode: (kind === "demo" ? "DEMO" : "LIVE") satisfies BitrixMode,
 			horizonDays: horizon,
+			fromDate,
 			includeDeals: deals,
 			includeInvoices: invoices,
 			weightByProbability: weighted,
