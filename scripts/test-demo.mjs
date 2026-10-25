@@ -346,6 +346,41 @@ try {
 	);
 	check(upload.ok, "Upload must be handled locally");
 	const importedFile = await upload.json();
+	const bulkUpload = async (path, filename) => {
+		const form = new FormData();
+		form.set("file", new File(["demo"], filename, { type: "text/csv" }));
+		const rs = await transport.demoResponse(
+			new Request(`http://demo.test/api/v1/orchestrator${path}`, { method: "POST", body: form })
+		);
+		assert.ok(rs?.ok, `Bulk import must work in demo mode: ${path}`);
+		checks++;
+		return rs.json();
+	};
+	const bulkCompanies = await bulkUpload("/companies/imports", "companies.csv");
+	check(
+		bulkCompanies.created === 1 && bulkCompanies.companies[0].status === "CREATED",
+		"Bulk company import must create a visible example company"
+	);
+	const repeatedCompanies = await bulkUpload("/companies/imports", "companies.csv");
+	check(
+		repeatedCompanies.created === 0 && repeatedCompanies.existing === 1,
+		"Repeating a company import must not duplicate companies"
+	);
+	const bulkOperations = await bulkUpload("/companies/operations/imports", "all_operations.csv");
+	check(
+		bulkOperations.inserted > 0 && bulkOperations.items[0].accountId,
+		"Bulk operation import must create an account with data"
+	);
+	const repeatedOperations = await bulkUpload("/companies/operations/imports", "all_operations.csv");
+	check(
+		repeatedOperations.inserted === 0 && repeatedOperations.existing === bulkOperations.inserted,
+		"Repeating an operation import must not duplicate payments"
+	);
+	const bulkAccount = `/api/v1/orchestrator/companies/${bulkOperations.items[0].companyId}/accounts/${bulkOperations.items[0].accountId}`;
+	check(
+		(await get(`${bulkAccount}/dashboard`)).currentBalance !== null,
+		"Imported demo account must have a usable dashboard"
+	);
 	await get(`${company}/imports?accountId=${config.DEMO_ACCOUNT_ID}`);
 	await get(`${company}/imports/${importedFile.id}`);
 	await get(`${company}/imports/${importedFile.id}/issues`);
