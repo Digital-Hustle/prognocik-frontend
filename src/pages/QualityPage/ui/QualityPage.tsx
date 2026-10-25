@@ -160,7 +160,7 @@ const QualityPage = () => {
 					<h2 className="font-display text-xl font-semibold">Проверка на истории</h2>
 				</div>
 
-				<div className="grid gap-4 lg:grid-cols-3">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 					<motion.div
 						variants={fadeUp}
 						initial="hidden"

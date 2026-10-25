@@ -111,7 +111,7 @@ const SettingsPage = () => {
 				variants={stagger(0.06)}
 				initial="hidden"
 				animate="show"
-				className="grid gap-4 lg:grid-cols-2"
+				className="grid grid-cols-1 gap-4 lg:grid-cols-2"
 			>
 				{company.data && (
 					<Section

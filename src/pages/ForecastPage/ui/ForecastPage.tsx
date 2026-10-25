@@ -263,7 +263,7 @@ const ForecastPage = () => {
 						variants={stagger(0.06, 0.1)}
 						initial="hidden"
 						animate="show"
-						className="grid gap-4 lg:grid-cols-3"
+						className="grid grid-cols-1 gap-4 lg:grid-cols-3"
 					>
 						<motion.div
 							variants={fadeUp}
@@ -435,7 +435,7 @@ const ForecastPage = () => {
 						variants={stagger(0.06, 0.2)}
 						initial="hidden"
 						animate="show"
-						className="grid gap-4 lg:grid-cols-2"
+						className="grid grid-cols-1 gap-4 lg:grid-cols-2"
 					>
 						<motion.div
 							variants={fadeUp}

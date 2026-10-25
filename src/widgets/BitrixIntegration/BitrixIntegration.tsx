@@ -100,7 +100,7 @@ export const BitrixIntegration = ({ companyId, accountId }: { companyId: string;
 				variants={fadeUp}
 				initial="hidden"
 				animate="show"
-				className="grid gap-4 lg:grid-cols-5"
+				className="grid grid-cols-1 gap-4 lg:grid-cols-5"
 			>
 				<Card className="lg:col-span-2">
 					<CardHeader>
