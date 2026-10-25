@@ -20,6 +20,12 @@ interface ForecastOverviewProps {
 
 const money = (v: number) => formatMoney(v);
 
+/** Почему нет вероятности и что с этим делать: оценка строится по ретро-прогнозам на прошлых датах */
+const riskHint = (risk: { availability: string; calibrationOriginCount: number }) =>
+	risk.availability === "INSUFFICIENT_HISTORY"
+		? ` (проверочных прогнозов: ${risk.calibrationOriginCount}). Нужно больше истории или меньший шаг калибровки в настройках`
+		: "";
+
 /**
  * Четыре ответа для предпринимателя: сколько есть сейчас, когда может не хватить, сколько не хватит и насколько
  * это вероятно. null-вероятность — «недостаточно данных», а не 0%.
@@ -102,12 +108,12 @@ export const ForecastOverview = memo(({ dashboard, account }: ForecastOverviewPr
 				tone={riskAvailable && (risk.probability ?? 0) >= 0.3 ? "lime" : "plain"}
 				icon={<AlertTriangle />}
 				label="Вероятность разрыва"
-				value={riskAvailable ? formatProbability(risk.probability) : "—"}
+				value={riskAvailable ? formatProbability(risk.probability) : risk ? "Нет оценки" : "—"}
 				sub={
 					!risk
 						? "Прогноз ещё не рассчитан"
 						: !riskAvailable
-							? RISK_UNAVAILABLE_LABEL[risk.availability] || "Недостаточно данных для вероятности"
+							? `${RISK_UNAVAILABLE_LABEL[risk.availability] || "Недостаточно данных для вероятности"}${riskHint(risk)}`
 							: risk.probabilityCalibrated
 								? `по ${risk.scenarioCount} сценариям, откалибровано`
 								: "сценарная оценка по истории"

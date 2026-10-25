@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useCategoryNames } from "@/entities/Payment";
 import { useGetPlanFactQuery } from "@/entities/PlanFact";
 import type { GroupBy, OverduePlan, UnplannedFact } from "@/entities/PlanFact";
-import { useWorkspace } from "@/entities/Workspace";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
 import { addDays, formatDayShort, todayIso } from "@/shared/lib/date/date";
@@ -14,14 +13,12 @@ import { DateRangePicker } from "@/shared/ui/DatePicker/DatePicker";
 import type { DateRange } from "@/shared/ui/DatePicker/DatePicker";
 import { EmptyState } from "@/shared/ui/EmptyState/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
-import { PageHeader } from "@/shared/ui/PageHeader/PageHeader";
 import { Segmented } from "@/shared/ui/Segmented/Segmented";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { Stat } from "@/shared/ui/Stat/Stat";
-import { PlanFactChart } from "@/widgets/PlanFactChart";
+import { PlanFactChart } from "./PlanFactChart";
 
-const PlanFactPage = () => {
-	const { companyId, accountId } = useWorkspace();
+export const PlanFactPanel = ({ companyId, accountId }: { companyId: string; accountId: string }) => {
 	const names = useCategoryNames(companyId);
 	const [range, setRange] = useState<DateRange>({ from: addDays(todayIso(), -42), to: addDays(todayIso(), 28) });
 	const [groupBy, setGroupBy] = useState<GroupBy>("WEEK");
@@ -51,12 +48,6 @@ const PlanFactPage = () => {
 
 	return (
 		<div className="flex flex-col gap-4 sm:gap-5">
-			<PageHeader
-				kicker="Контроль"
-				title="План и факт"
-				sub="Сравниваем ожидаемые поступления и списания с тем, что реально прошло по счёту. Невыполненные в срок планы подсвечиваем."
-			/>
-
 			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 				<div className="sm:w-64">
 					<DateRangePicker
@@ -266,5 +257,3 @@ const PlanFactPage = () => {
 		</div>
 	);
 };
-
-export default PlanFactPage;

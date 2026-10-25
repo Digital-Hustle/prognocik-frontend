@@ -6,12 +6,8 @@ import type { StatementImport, ValidationMode } from "@/entities/Import";
 import { problemMessage, toProblem } from "@/shared/api/problem";
 import { fadeUp, popIn, spring, tween } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
-import { addDays, todayIso } from "@/shared/lib/date/date";
 import { useIdempotencyKey } from "@/shared/lib/hooks/useIdempotencyKey/useIdempotencyKey";
 import { Button } from "@/shared/ui/Button/Button";
-import { DateRangePicker } from "@/shared/ui/DatePicker/DatePicker";
-import type { DateRange } from "@/shared/ui/DatePicker/DatePicker";
-import { Field } from "@/shared/ui/Input/Input";
 import { Progress } from "@/shared/ui/Progress/Progress";
 import { Segmented } from "@/shared/ui/Segmented/Segmented";
 import { Switch } from "@/shared/ui/Switch/Switch";
@@ -38,11 +34,7 @@ export const UploadStatementForm = memo(
 		const [file, setFile] = useState<File | null>(null);
 		const [drag, setDrag] = useState(false);
 		const [mode, setMode] = useState<ValidationMode>("SKIP_INVALID");
-		const [complete, setComplete] = useState(false);
-		const [period, setPeriod] = useState<DateRange>({
-			from: addDays(todayIso(), -60),
-			to: addDays(todayIso(), -1),
-		});
+		const [complete, setComplete] = useState(true);
 
 		const pick = useCallback((f: File | undefined | null) => {
 			if (!f) return;
@@ -68,16 +60,14 @@ export const UploadStatementForm = memo(
 				modified: file.lastModified,
 				mode,
 				complete,
-				period: complete ? period : null,
 			};
 			const rs = await upload({
 				companyId,
 				accountId,
 				file,
 				validationMode: mode,
-				completeness: complete ? "CONFIRMED_COMPLETE" : "UNKNOWN",
-				declaredFromDate: complete ? period.from : undefined,
-				declaredToDate: complete ? period.to : undefined,
+				// По умолчанию сервер сам подтверждает период от первой до последней операции файла
+				completeness: complete ? undefined : "UNKNOWN",
 				idempotencyKey: idem.get(fingerprint),
 			});
 			if ("data" in rs && rs.data) {
@@ -183,7 +173,7 @@ export const UploadStatementForm = memo(
 					</AnimatePresence>
 				</motion.label>
 
-				<div className="grid gap-4 lg:grid-cols-2">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<div className="flex flex-col gap-1.5">
 						<span className="text-sm font-medium">Если в файле есть ошибочные строки</span>
 						<Segmented
@@ -205,9 +195,9 @@ export const UploadStatementForm = memo(
 					<div className="flex flex-col gap-2">
 						<label className="flex items-center gap-3 rounded-md bg-muted px-3 py-2.5">
 							<span className="min-w-0 flex-1">
-								<span className="block text-sm font-medium">Выписка полная за период</span>
+								<span className="block text-sm font-medium">Считать выписку полной</span>
 								<span className="block text-xs text-muted-foreground">
-									Пустые дни будут считаться днями без операций, а не пропусками
+									Дни без операций между первой и последней датой файла — не пропуски, а дни с нулём
 								</span>
 							</span>
 							<Switch
@@ -216,25 +206,6 @@ export const UploadStatementForm = memo(
 								label="Полная выписка"
 							/>
 						</label>
-						<AnimatePresence initial={false}>
-							{complete && (
-								<motion.div
-									initial={{ opacity: 0, height: 0 }}
-									animate={{ opacity: 1, height: "auto" }}
-									exit={{ opacity: 0, height: 0, transition: tween.exit }}
-									transition={spring.glide}
-									className="overflow-hidden"
-								>
-									<Field label="Период выписки">
-										<DateRangePicker
-											value={period}
-											onChange={setPeriod}
-											max={todayIso()}
-										/>
-									</Field>
-								</motion.div>
-							)}
-						</AnimatePresence>
 					</div>
 				</div>
 

@@ -60,7 +60,7 @@ export const Calendar = ({
 	min?: string;
 	max?: string;
 }) => {
-	const start = value ?? range?.from ?? todayKey();
+	const start = value || range?.from || todayKey();
 	const [ym, setYm] = useState(() => {
 		const [y, m] = start.split("-").map(Number);
 		return { y, m: m - 1 };

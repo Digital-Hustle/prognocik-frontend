@@ -3,12 +3,18 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import type { WhatIfSchema } from "../types/whatIfSchema";
 
 export const initialWhatIf: WhatIfSchema = {
-	delayedPlanId: null,
-	delayWeeks: 2,
+	delayReceiptPlanId: null,
+	delayReceiptDays: 21,
+	cancelPlanId: null,
+	delayPaymentPlanId: null,
+	delayPaymentDays: 14,
 	revenueDropPct: 0,
-	fixedCostGrowthPct: 0,
+	costGrowthPct: 0,
+	costTarget: "RECURRING",
 	extraExpense: "",
 	extraExpenseDate: null,
+	extraIncome: "",
+	extraIncomeDate: null,
 };
 
 export const whatIfSlice = createSlice({

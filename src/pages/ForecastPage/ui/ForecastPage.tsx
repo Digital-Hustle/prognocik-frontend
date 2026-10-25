@@ -29,6 +29,7 @@ import { Status } from "@/shared/ui/Status/Status";
 import { AlertsPanel } from "@/widgets/AlertsPanel";
 import { ForecastChart, ForecastChartLegend } from "@/widgets/ForecastChart";
 import { ForecastOverview } from "@/widgets/ForecastOverview";
+import { RecurringPanel } from "@/widgets/RecurringPanel";
 import { TraceTimeline } from "@/widgets/TraceTimeline";
 import { UpcomingPayments } from "@/widgets/UpcomingPayments";
 
@@ -262,7 +263,7 @@ const ForecastPage = () => {
 						variants={stagger(0.06, 0.1)}
 						initial="hidden"
 						animate="show"
-						className="grid gap-4 lg:grid-cols-3"
+						className="grid grid-cols-1 gap-4 lg:grid-cols-3"
 					>
 						<motion.div
 							variants={fadeUp}
@@ -329,8 +330,9 @@ const ForecastPage = () => {
 											</CardHeader>
 											<div className="p-4 sm:p-6">
 												<WhatIfPanel
+													companyId={companyId}
+													accountId={accountId}
 													forecast={f}
-													upcoming={d.upcomingPayments}
 													onResult={onScenario}
 													canSave={canWrite}
 													onSaveExpense={(amount, date) => {
@@ -434,7 +436,7 @@ const ForecastPage = () => {
 						variants={stagger(0.06, 0.2)}
 						initial="hidden"
 						animate="show"
-						className="grid gap-4 lg:grid-cols-2"
+						className="grid grid-cols-1 gap-4 lg:grid-cols-2"
 					>
 						<motion.div
 							variants={fadeUp}
@@ -466,6 +468,17 @@ const ForecastPage = () => {
 								}
 							/>
 						</motion.div>
+					</motion.div>
+
+					<motion.div
+						variants={fadeUp}
+						initial="hidden"
+						animate="show"
+					>
+						<RecurringPanel
+							companyId={companyId}
+							accountId={accountId}
+						/>
 					</motion.div>
 				</>
 			)}

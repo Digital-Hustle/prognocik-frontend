@@ -1,0 +1,15 @@
+# Дополнение к docker-compose.yml: подключает фронт к сети Gateway из hack-2026-back.
+# Имя сети = <имя проекта compose бэкенда>_auth-edge. Если бэкенд запускали из папки hack-2026-back, это:
+#   hack-2026-back_auth-edge
+# Проверить: docker network ls | grep auth-edge
+services:
+    frontend:
+        environment:
+            GATEWAY_URL: http://gateway:5001
+        networks:
+            - auth-edge
+
+networks:
+    auth-edge:
+        external: true
+        name: ${BACKEND_NETWORK:-hack-2026-back_auth-edge}

@@ -25,7 +25,15 @@ import {
 	total,
 } from "./data";
 import type { AccountData } from "./data";
-import { demoBitrixStatus, demoBitrixSync, demoEmployees, demoPaymentCalendar, demoTaxCalendar } from "./integrations";
+import {
+	demoBitrixStatus,
+	demoOneCSync,
+	demoBitrixSync,
+	demoEmployees,
+	demoPaymentCalendar,
+	demoTaxCalendar,
+} from "./integrations";
+import { demoMaxPayment, demoScenarioPreview } from "./scenarios";
 import { analytics, assistantAnswer, dashboard, filteredPayments, gapDetails, planFact } from "./views";
 
 type Body = Record<string, unknown>;
@@ -860,6 +868,15 @@ async function route(request: Request): Promise<Response> {
 			if (report.dataChanged) stale(companyId);
 			return json(report);
 		}
+	}
+	if (root === "integrations" && tail[1] === "onec" && tail[2] === "sync" && method === "POST") {
+		const report = demoOneCSync(account, data, body);
+		if (report.dataChanged) stale(companyId);
+		return json(report);
+	}
+	if (root === "scenarios" && method === "POST") {
+		if (tail[1] === "preview") return json(demoScenarioPreview(data.forecasts, data.plans, body, fail));
+		if (tail[1] === "max-payment") return json(demoMaxPayment(data.forecasts, data.plans, body, fail));
 	}
 	if (root === "assistant" && tail[1] === "chat" && method === "POST") {
 		if (!text(body, "message").trim()) return fail(422, "INVALID_MESSAGE", "Напишите вопрос");

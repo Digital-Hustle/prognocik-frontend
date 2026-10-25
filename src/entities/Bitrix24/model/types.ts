@@ -20,6 +20,8 @@ export interface BitrixSyncRq {
 	mode?: BitrixMode;
 	webhookUrl?: string;
 	horizonDays?: number;
+	/** Первый день окна; для прогноза в прошлом — asOfDate + 1 */
+	fromDate?: IsoDate;
 	includeDeals?: boolean;
 	includeInvoices?: boolean;
 	weightByProbability?: boolean;

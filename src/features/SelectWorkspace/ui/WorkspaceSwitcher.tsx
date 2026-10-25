@@ -1,14 +1,15 @@
-import { Building2, Check, ChevronDown, Landmark, Plus } from "lucide-react";
+import { Building2, Check, ChevronDown, Landmark, Plus, Search } from "lucide-react";
 import { motion } from "motion/react";
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
+import { companyApi, useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
 import { useWorkspace, workspaceActions } from "@/entities/Workspace";
 import { spring } from "@/shared/config/motion";
 import { RoutePath } from "@/shared/const/router";
 import { cn } from "@/shared/lib/cn/cn";
 import { formatMoney } from "@/shared/lib/format/money";
 import { useAppDispatch } from "@/shared/lib/hooks/useAppDispatch/useAppDispatch";
+import { Input } from "@/shared/ui/Input/Input";
 import { PopoverPanel, usePopover } from "@/shared/ui/Popover/Popover";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 
@@ -22,11 +23,35 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 	const shownCompany = browseCompany ?? companyId;
 
 	const companies = useListCompaniesQuery();
+	const [query, setQuery] = useState("");
+	const shown = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		const all = companies.data?.items ?? [];
+		return (q ? all.filter((c) => c.name.toLowerCase().includes(q) || c.inn?.includes(q)) : all).slice(0, 100);
+	}, [companies.data, query]);
 	const accounts = useListAccountsQuery(shownCompany, { skip: !shownCompany });
 	const currentAccounts = useListAccountsQuery(companyId, { skip: !companyId });
 
 	const company = companies.data?.items.find((c) => c.id === companyId);
 	const account = currentAccounts.data?.items.find((a) => a.id === accountId);
+
+	/** Клик по компании сразу переключает рабочее место: один счёт — выбираем его, несколько — даём выбрать. */
+	const pickCompany = async (id: string) => {
+		setBrowseCompany(id);
+		const sub = dispatch(companyApi.endpoints.listAccounts.initiate(id));
+		try {
+			const list = await sub.unwrap();
+			const open = list.items.filter((a) => !a.archived);
+			if (open.length === 1 || (list.items.length === 1 && open.length === 0)) {
+				dispatch(workspaceActions.selectAccount({ companyId: id, accountId: (open[0] ?? list.items[0]).id }));
+				p.setOpen(false);
+			}
+		} catch {
+			/* список счетов покажет ошибку сам */
+		} finally {
+			sub.unsubscribe();
+		}
+	};
 
 	return (
 		<>
@@ -69,15 +94,29 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 				<div className="px-2 pt-1 pb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
 					Компании
 				</div>
+				{(companies.data?.items.length ?? 0) > 6 && (
+					<div className="px-1 pb-2">
+						<Input
+							icon={<Search />}
+							placeholder="Найти организацию"
+							value={query}
+							onChange={(e) => setQuery(e.target.value)}
+							aria-label="Поиск организации"
+						/>
+					</div>
+				)}
 				{companies.isLoading ? (
 					<Skeleton className="h-10" />
 				) : (
-					<ul className="flex flex-col gap-0.5">
-						{companies.data?.items.map((c) => (
+					<ul className="flex max-h-64 flex-col gap-0.5 overflow-y-auto overscroll-contain">
+						{shown.length === 0 && (
+							<li className="px-2 py-2 text-sm text-muted-foreground">Ничего не нашлось</li>
+						)}
+						{shown.map((c) => (
 							<li key={c.id}>
 								<button
 									type="button"
-									onClick={() => setBrowseCompany(c.id)}
+									onClick={() => void pickCompany(c.id)}
 									className={cn(
 										"flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface",
 										c.id === shownCompany && "bg-accent font-medium text-accent-foreground"

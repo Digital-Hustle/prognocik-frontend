@@ -1,12 +1,24 @@
+export type CostTarget = "RECURRING" | "ALL_OUTFLOWS";
+
+/** Состояние рычагов «что если». Пустое значение = рычаг не включён */
 export interface WhatIfSchema {
-	/** id ожидаемого поступления, которое «задержится» (из dashboard.upcomingPayments) */
-	delayedPlanId: string | null;
-	delayWeeks: number;
-	/** Падение выручки, % (регулярные и обычные поступления) */
+	/** Клиент заплатит позже: план-поступление и на сколько дней */
+	delayReceiptPlanId: string | null;
+	delayReceiptDays: number;
+	/** Оплата по счёту не придёт: план исчезает из прогноза */
+	cancelPlanId: string | null;
+	/** Мы заплатим позже: план-списание и на сколько дней */
+	delayPaymentPlanId: string | null;
+	delayPaymentDays: number;
+	/** Падение выручки, % */
 	revenueDropPct: number;
-	/** Рост постоянных расходов, % (регулярные списания) */
-	fixedCostGrowthPct: number;
+	/** Рост постоянных расходов, % */
+	costGrowthPct: number;
+	costTarget: CostTarget;
 	/** Внеплановый расход */
 	extraExpense: string;
 	extraExpenseDate: string | null;
+	/** Разовое поступление (кредит, предоплата) */
+	extraIncome: string;
+	extraIncomeDate: string | null;
 }

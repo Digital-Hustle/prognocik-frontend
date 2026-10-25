@@ -4,8 +4,22 @@ import type { Account, Company, Member } from "../model/types";
 
 export const companyApi = rtkApi.injectEndpoints({
 	endpoints: (build) => ({
+		/**
+		 * Все компании пользователя. Бэк отдаёт не больше 200 на страницу, а после массовой загрузки их сотни,
+		 * поэтому читаем страницы подряд до hasNext=false (не больше 20 запросов — 4000 компаний).
+		 */
 		listCompanies: build.query<PageRs<Company>, void>({
-			query: () => ({ url: orch("/companies"), params: { size: 100 } }),
+			queryFn: async (_arg, _api, _extra, baseQuery) => {
+				const items: Company[] = [];
+				for (let page = 0; page < 20; page++) {
+					const rs = await baseQuery({ url: orch("/companies"), params: { page, size: 200 } });
+					if (rs.error) return { error: rs.error };
+					const data = rs.data as PageRs<Company>;
+					items.push(...data.items);
+					if (!data.page.hasNext) break;
+				}
+				return { data: { items, page: { page: 0, size: items.length, total: items.length, hasNext: false } } };
+			},
 			providesTags: (rs) => [
 				{ type: "Companies", id: "LIST" },
 				...(rs?.items.map((c) => ({ type: "Companies" as const, id: c.id })) ?? []),

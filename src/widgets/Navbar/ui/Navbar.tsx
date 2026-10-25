@@ -1,11 +1,9 @@
 import {
-	BarChart3,
 	CalendarClock,
 	Plug,
 	Users,
 	FlaskConical,
 	LogOut,
-	Repeat2,
 	ScrollText,
 	Settings2,
 	TrendingUp,
@@ -55,29 +53,11 @@ const NAV: NavItem[] = [
 		),
 	},
 	{
-		to: RoutePath.recurring,
-		label: "Регулярные",
-		icon: (
-			<span className="hidden 2xl:flex">
-				<Repeat2 />
-			</span>
-		),
-	},
-	{
 		to: RoutePath.plans,
-		label: "Планы",
+		label: "Планы и факт",
 		icon: (
 			<span className="hidden 2xl:flex">
 				<CalendarClock />
-			</span>
-		),
-	},
-	{
-		to: RoutePath.plan_fact,
-		label: "План-факт",
-		icon: (
-			<span className="hidden 2xl:flex">
-				<BarChart3 />
 			</span>
 		),
 	},

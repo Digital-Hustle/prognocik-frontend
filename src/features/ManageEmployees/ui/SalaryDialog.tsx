@@ -5,6 +5,7 @@ import type { Employee, EmployeeSchedule } from "@/entities/Employee";
 import { describeSchedule, useListRecurringPatternsQuery } from "@/entities/Recurring";
 import { problemMessage } from "@/shared/api/problem";
 import { formatMoney } from "@/shared/lib/format/money";
+import { validateInn } from "@/shared/lib/validation/taxIds";
 import { Button } from "@/shared/ui/Button/Button";
 import { Dialog } from "@/shared/ui/Dialog/Dialog";
 import { Field, Input } from "@/shared/ui/Input/Input";
@@ -102,7 +103,8 @@ export const SalaryDialog = memo(({ open, onClose, companyId, accountId, employe
 		if (!AMOUNT.test(amount.trim()) || Number(amount.replace(",", ".")) <= 0)
 			return setError("Сумма — число больше нуля, не больше двух знаков после запятой");
 		const cleanInn = inn.trim();
-		if (cleanInn && !/^(\d{10}|\d{12})$/.test(cleanInn)) return setError("ИНН — 10 или 12 цифр");
+		const innError = validateInn(cleanInn, "person");
+		if (innError) return setError(innError);
 		if (!cleanInn && !name.trim()) return setError("Укажите ИНН или имя получателя как в банковских операциях");
 		const day = Number(dayOfMonth);
 		if (frequency === "MONTHLY" && !(Number.isInteger(day) && day >= 1 && day <= 31))
@@ -199,8 +201,8 @@ export const SalaryDialog = memo(({ open, onClose, companyId, accountId, employe
 						</Field>
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Field
-								label="ИНН получателя"
-								hint={payment ? "Получатель неизменен" : "Приоритетнее имени"}
+								label="ИНН сотрудника"
+								hint={payment ? "Получатель неизменен" : "12 цифр, приоритетнее имени"}
 							>
 								<Input
 									inputMode="numeric"

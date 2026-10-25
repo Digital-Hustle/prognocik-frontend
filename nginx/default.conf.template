@@ -1,0 +1,63 @@
+# Шаблон конфигурации: ${GATEWAY_URL}, ${DNS_RESOLVER}, ${MAX_UPLOAD} подставляются при старте контейнера.
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # DNS Docker; адрес Gateway резолвится при запросе, поэтому фронт стартует и раньше бэкенда
+    resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+    set $gateway "${GATEWAY_URL}";
+
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml text/plain;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Gateway: куки HttpOnly и CSRF работают, потому что браузер видит один origin
+    location /api/ {
+        proxy_pass $gateway;
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        # Origin и Cookie уходят как есть: Gateway проверяет их сам
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 300s;
+        client_max_body_size ${MAX_UPLOAD};
+        proxy_request_buffering off;
+    }
+
+    # Хешированные файлы сборки кэшируем надолго
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # Точка входа и сервис-воркер не кэшируем, чтобы обновления доезжали сразу
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+    }
+
+    # SPA: любой путь отдаёт index.html (роутинг на клиенте)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
