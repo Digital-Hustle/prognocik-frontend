@@ -161,6 +161,9 @@ function css() {
   * { @apply border-border outline-ring/50; }
   /* фон html = фон темы: никаких чёрных полос под вырезом и при оттягивании страницы */
   html { -webkit-tap-highlight-color: transparent; background-color: var(--background); }
+  /* кнопки и ссылки в Tailwind 4 по умолчанию без «руки»: возвращаем, чтобы было видно, что элемент нажимается */
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, select:not(:disabled) { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
   /* место под полосу прокрутки зарезервировано всегда: центровка не прыгает между страницами и при открытии модалки */
   html { scrollbar-gutter: stable; }
   /* смена темы: плавный перелив через View Transitions */

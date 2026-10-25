@@ -65,7 +65,7 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 					p.setOpen((o) => !o);
 				}}
 				className={cn(
-					"flex h-12 min-w-0 items-center gap-2.5 rounded-md px-2.5 text-left transition-colors outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring",
+					"flex h-12 min-w-0 items-center gap-2.5 rounded-md px-2.5 text-left transition-colors outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring",
 					className
 				)}
 			>
@@ -118,7 +118,7 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 									type="button"
 									onClick={() => void pickCompany(c.id)}
 									className={cn(
-										"flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface",
+										"flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface-hover",
 										c.id === shownCompany && "bg-accent font-medium text-accent-foreground"
 									)}
 								>
@@ -154,7 +154,7 @@ export const WorkspaceSwitcher = memo(({ className }: { className?: string }) =>
 											);
 											p.setOpen(false);
 										}}
-										className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface"
+										className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-surface-hover"
 									>
 										<span className="min-w-0 flex-1">
 											<span className="block truncate font-medium">{a.name}</span>

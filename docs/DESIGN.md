@@ -18,7 +18,7 @@
 | `card` | `bg-card` / `text-card` | `#FFFFFF` | `#0F2A20` | 16.18 / 13.60 |
 | `popover` | `bg-popover` / `text-popover` | `#FFFFFF` | `#123123` | 16.18 / 12.53 |
 | `surface` | `bg-surface` / `text-surface` | `#ECEEE6` | `#123123` | 13.82 / 12.53 |
-| `surface-hover` | `bg-surface-hover` / `text-surface-hover` | `#E3E6DC` | `#173B2B` |  |
+| `surface-hover` | `bg-surface-hover` / `text-surface-hover` | `#E3E6DC` | `#1E4A36` |  |
 | `muted` | `bg-muted` / `text-muted` | `#F8F9F4` | `#0D241B` | 5.48 / 7.31 |
 | `border` | `bg-border` / `text-border` | `#E3E6DC` | `#173B2B` |  |
 | `border-strong` | `bg-border-strong` / `text-border-strong` | `#CFD5C7` | `#1E4A36` |  |

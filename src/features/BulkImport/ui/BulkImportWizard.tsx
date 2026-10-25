@@ -134,7 +134,7 @@ export const BulkImportWizard = memo(({ onOpenAccount, onBrowse }: Props) => {
 								aria-current={on ? "step" : undefined}
 								className={cn(
 									"flex w-full flex-col gap-2 rounded-md p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
-									!on && "hover:bg-surface"
+									!on && "hover:bg-surface-hover"
 								)}
 							>
 								<motion.span
@@ -257,7 +257,7 @@ export const BulkImportWizard = memo(({ onOpenAccount, onBrowse }: Props) => {
 												<button
 													type="button"
 													onClick={() => onOpenAccount(r.companyId, r.accountId)}
-													className="flex w-full items-center gap-3 rounded-md bg-muted px-3 py-2.5 text-left outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring"
+													className="flex w-full items-center gap-3 rounded-md bg-muted px-3 py-2.5 text-left outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring"
 												>
 													<Building2 className="size-4 shrink-0 text-muted-foreground" />
 													<span className="min-w-0 flex-1">

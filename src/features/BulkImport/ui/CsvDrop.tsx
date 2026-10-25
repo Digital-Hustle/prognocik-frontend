@@ -47,7 +47,7 @@ export const CsvDrop = ({
 				}}
 				className={cn(
 					"flex min-h-28 cursor-pointer items-center gap-4 rounded-lg border-2 border-dashed px-4 py-4 transition-colors duration-fast",
-					drag ? "border-brand bg-accent" : "border-border-strong bg-muted hover:bg-surface",
+					drag ? "border-brand bg-accent" : "border-border-strong bg-muted hover:bg-surface-hover",
 					disabled && "pointer-events-none opacity-60"
 				)}
 			>

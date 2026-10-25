@@ -61,7 +61,7 @@ const ChoiceRow = ({
 			variants={liftItem}
 			type="button"
 			onClick={onClick}
-			className="flex w-full items-center gap-3 rounded-lg bg-muted p-4 text-left outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring"
+			className="flex w-full items-center gap-3 rounded-lg bg-muted p-4 text-left outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring"
 		>
 			<span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-hero text-lime [&_svg]:size-5">
 				{icon}
@@ -245,7 +245,7 @@ const OnboardingPage = () => {
 										<button
 											type="button"
 											onClick={() => navigate(RoutePath.demo_import)}
-											className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong p-4 text-left outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring"
+											className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong p-4 text-left outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring"
 										>
 											<span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground [&_svg]:size-5">
 												<Presentation />

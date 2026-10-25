@@ -118,7 +118,7 @@ export const semantic = {
 		"popover-foreground": p.forest[100],
 		surface: p.forest[850],
 		"surface-foreground": p.forest[100],
-		"surface-hover": p.forest[800],
+		"surface-hover": p.forest[700],
 		muted: "#0D241B",
 		"muted-foreground": p.forest[300],
 		"subtle-foreground": p.forest[400],

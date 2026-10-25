@@ -109,7 +109,7 @@ export const Dialog = ({
 								type="button"
 								onClick={onClose}
 								aria-label="Закрыть"
-								className="-mt-1 -mr-2 flex size-control-md shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+								className="-mt-1 -mr-2 flex size-control-md shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 							>
 								<X className="size-5" />
 							</button>

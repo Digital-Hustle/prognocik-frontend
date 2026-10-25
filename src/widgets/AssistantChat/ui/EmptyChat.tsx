@@ -38,7 +38,7 @@ export const EmptyChat = ({ onPick, disabled }: { onPick: (q: string) => void; d
 						type="button"
 						disabled={disabled}
 						onClick={() => onPick(q)}
-						className="w-full rounded-md bg-muted px-3.5 py-2.5 text-left text-sm transition-colors duration-fast hover:bg-surface disabled:opacity-50"
+						className="w-full rounded-md bg-muted px-3.5 py-2.5 text-left text-sm transition-colors duration-fast hover:bg-surface-hover disabled:opacity-50"
 					>
 						{q}
 					</button>

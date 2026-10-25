@@ -124,7 +124,7 @@ const ProfileMenu = memo(() => {
 				<Link
 					to={RoutePath.settings}
 					onClick={() => p.setOpen(false)}
-					className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-surface"
+					className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-surface-hover"
 				>
 					<Settings2 className="size-4" />
 					Настройки прогноза
@@ -132,7 +132,7 @@ const ProfileMenu = memo(() => {
 				<Link
 					to={RoutePath.profile}
 					onClick={() => p.setOpen(false)}
-					className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-surface"
+					className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-surface-hover"
 				>
 					<UserRound className="size-4" />
 					Профиль и сессии

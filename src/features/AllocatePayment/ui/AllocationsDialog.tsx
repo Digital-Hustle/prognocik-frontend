@@ -199,7 +199,7 @@ export const AllocationsDialog = memo(
 												type="button"
 												onClick={() => pick(p)}
 												className={cn(
-													"flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-surface",
+													"flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-surface-hover",
 													picked?.id === p.id && "bg-accent ring-1 ring-brand"
 												)}
 											>
