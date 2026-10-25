@@ -1,11 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { sessionExpired } from "@/shared/api/rtkApi";
+import { DEMO_ACCOUNT_ID, DEMO_COMPANY_ID, isDemoMode } from "@/shared/config/demoMode";
 import { WORKSPACE_LOCAL_STORAGE_KEY } from "@/shared/const/localstorage";
 import { storage } from "@/shared/lib/storage";
 import type { WorkspaceSchema } from "./types";
 
 function load(): WorkspaceSchema {
+	// Временные демо-счета исчезают после перезагрузки; начинаем с исходного примера.
+	if (isDemoMode()) return { companyId: DEMO_COMPANY_ID, accountId: DEMO_ACCOUNT_ID };
 	try {
 		const raw = storage.get(WORKSPACE_LOCAL_STORAGE_KEY);
 		if (raw) {
@@ -19,7 +22,7 @@ function load(): WorkspaceSchema {
 }
 
 function save(state: WorkspaceSchema) {
-	storage.set(WORKSPACE_LOCAL_STORAGE_KEY, JSON.stringify(state));
+	if (!isDemoMode()) storage.set(WORKSPACE_LOCAL_STORAGE_KEY, JSON.stringify(state));
 }
 
 export const workspaceSlice = createSlice({

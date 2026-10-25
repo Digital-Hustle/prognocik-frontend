@@ -4,10 +4,18 @@ import { BrowserRouter } from "react-router-dom";
 import "@/app/styles/index.css";
 import { ErrorBoundary } from "@/app/providers/ErrorBoundary";
 import { StoreProvider } from "@/app/providers/StoreProvider";
+import { registerDemoTransport } from "@/shared/api/demoTransport";
+import { DEMO_MODE_KEY } from "@/shared/config/demoMode";
 import { applyStoredTheme } from "@/shared/ui/ThemeSwitcher/ThemeSwitcher";
 import App from "./app/App";
 
 applyStoredTheme();
+registerDemoTransport(() =>
+	import("./app/providers/DemoProvider/api/router").then((module) => module.handleDemoRequest)
+);
+window.addEventListener("storage", (event) => {
+	if (event.key === DEMO_MODE_KEY || event.key === null) window.location.reload();
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<StrictMode>
