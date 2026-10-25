@@ -1,5 +1,5 @@
 import { Boxes, CheckCircle2, Clock, Plug } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useGetBitrixStatusQuery } from "@/entities/Bitrix24";
 import { useWorkspace } from "@/entities/Workspace";
@@ -135,26 +135,28 @@ const IntegrationsPage = () => {
 				})}
 			</motion.ul>
 
-			<motion.div
-				key={selected.id}
-				variants={fadeUp}
-				initial="hidden"
-				animate="show"
-			>
-				{selected.id === "bitrix24" ? (
-					<BitrixIntegration
-						companyId={companyId}
-						accountId={accountId}
-					/>
-				) : selected.id === "1c" ? (
-					<OneCIntegration
-						companyId={companyId}
-						accountId={accountId}
-					/>
-				) : (
-					<Soon card={selected} />
-				)}
-			</motion.div>
+			<AnimatePresence initial={false}>
+				<motion.div
+					key={selected.id}
+					variants={fadeUp}
+					initial="hidden"
+					animate="show"
+				>
+					{selected.id === "bitrix24" ? (
+						<BitrixIntegration
+							companyId={companyId}
+							accountId={accountId}
+						/>
+					) : selected.id === "1c" ? (
+						<OneCIntegration
+							companyId={companyId}
+							accountId={accountId}
+						/>
+					) : (
+						<Soon card={selected} />
+					)}
+				</motion.div>
+			</AnimatePresence>
 		</div>
 	);
 };
