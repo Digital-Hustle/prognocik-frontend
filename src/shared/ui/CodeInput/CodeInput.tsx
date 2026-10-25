@@ -54,7 +54,8 @@ export const CodeInput = ({
 	return (
 		<div
 			ref={scope}
-			className={cn("relative", className)}
+			// px: ободок активной ячейки и отскок при ошибке не обрезаются родителем с overflow-hidden
+			className={cn("relative px-1.5", className)}
 		>
 			<input
 				ref={input}

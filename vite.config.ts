@@ -10,7 +10,16 @@ export default defineConfig(({ mode }) => {
 	const gateway = env.VITE_GATEWAY_PROXY || "https://localhost:5001";
 
 	return {
-		plugins: [react(), tailwindcss()],
+		plugins: [
+			react(),
+			tailwindcss(),
+			{
+				// Абсолютные адреса для og:image и og:url: Telegram и соцсети не понимают относительные
+				name: "site-url",
+				transformIndexHtml: (html: string) =>
+					html.replaceAll("%SITE_URL%", (env.VITE_SITE_URL ?? "").replace(/\/$/, "")),
+			},
+		],
 		resolve: {
 			alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
 		},

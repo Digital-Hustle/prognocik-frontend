@@ -20,7 +20,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 					key={pathname}
 					{...pageIn}
 					exit={{ opacity: 0, transition: tween.exit }}
-					className="mx-auto w-full max-w-7xl flex-1 px-3 pt-6 pb-16 sm:px-6 sm:pt-10"
+					className="mx-auto w-full max-w-7xl flex-1 px-3 pt-5 pb-24 sm:px-6 sm:pt-10 sm:pb-16"
 				>
 					<Suspense fallback={<PageLoader />}>{children}</Suspense>
 				</motion.main>

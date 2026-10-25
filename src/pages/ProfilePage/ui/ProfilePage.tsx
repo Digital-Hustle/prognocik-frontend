@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { useSelector } from "react-redux";
 import { getUserAuthData } from "@/entities/User";
 import { EditProfileForm } from "@/features/EditProfile";
+import { InstallAppCard } from "@/features/InstallApp";
 import { useLogout } from "@/features/Logout";
 import { SessionsList } from "@/features/ManageSessions";
 import { DemoModeToggle } from "@/features/ToggleDemoMode";
@@ -66,6 +67,7 @@ const ProfilePage = () => {
 						<div className="h-5" />
 					</Card>
 				</motion.div>
+				<InstallAppCard />
 			</motion.div>
 			<details className="rounded-lg border border-border bg-card p-4 sm:p-6">
 				<summary className="cursor-pointer text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">

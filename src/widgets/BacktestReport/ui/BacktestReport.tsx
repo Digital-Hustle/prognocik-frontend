@@ -91,7 +91,7 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 				variants={stagger(0.05)}
 				initial="hidden"
 				animate="show"
-				className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+				className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4"
 			>
 				<Stat
 					tone="hero"

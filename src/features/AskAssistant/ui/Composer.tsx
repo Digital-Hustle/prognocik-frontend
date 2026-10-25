@@ -13,7 +13,7 @@ export const Composer = ({
 }: {
 	draft: string;
 	pending: boolean;
-	/** Меняется, когда поле нужно сфокусировать (панель открылась) */
+	/** Истина — поле фокусируется при открытии панели (десктоп); на телефоне фокус не трогаем */
 	focusKey: unknown;
 	onSend: (text: string) => void;
 	onStop: () => void;
@@ -26,6 +26,8 @@ export const Composer = ({
 	}, [draft]);
 
 	useEffect(() => {
+		// На телефоне клавиатура сразу закрыла бы подсказки — фокус только на десктопе
+		if (!focusKey) return;
 		const t = window.setTimeout(() => ref.current?.focus({ preventScroll: true }), 80);
 		return () => window.clearTimeout(t);
 	}, [focusKey, draft]);
