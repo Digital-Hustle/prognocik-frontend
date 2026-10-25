@@ -1,4 +1,5 @@
 import type { EnhancedStore, Reducer, ReducersMapObject, UnknownAction } from "@reduxjs/toolkit";
+import type { AssistantSchema } from "@/entities/Assistant";
 import type { UserSchema } from "@/entities/User";
 import type { WorkspaceSchema } from "@/entities/Workspace";
 import type { AuthByEmailSchema } from "@/features/AuthByEmail";
@@ -8,6 +9,7 @@ import type { rtkApi } from "@/shared/api/rtkApi";
 export interface StateSchema {
 	user: UserSchema;
 	workspace: WorkspaceSchema;
+	assistant: AssistantSchema;
 	[rtkApi.reducerPath]: ReturnType<typeof rtkApi.reducer>;
 
 	// Асинхронные редюсеры

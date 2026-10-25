@@ -4,6 +4,7 @@ import { memo } from "react";
 import { useGetGapDetailsQuery } from "@/entities/Forecast";
 import type { PaymentFactor } from "@/entities/Forecast";
 import { useCategoryNames } from "@/entities/Payment";
+import { OpenAssistantButton } from "@/features/AskAssistant";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
 import { formatDay, formatDayShort } from "@/shared/lib/date/date";
@@ -79,6 +80,23 @@ export const GapDetailsDialog = memo(
 				title={g?.kind === "BUFFER_BREACH" ? "Остаток ниже буфера" : "Кассовый разрыв"}
 				description={g ? `${formatDay(g.fromDate)} — ${formatDay(g.toDate)}` : undefined}
 				className="sm:max-w-2xl"
+				footer={
+					g && (
+						<OpenAssistantButton
+							variant="accent"
+							size="md"
+							question="Почему возник этот разрыв и что на него влияет?"
+							context={{
+								forecastId,
+								gapId,
+								label: `Разрыв ${formatDayShort(g.fromDate)} — ${formatDayShort(g.toDate)}`,
+							}}
+							onClick={onClose}
+						>
+							Спросить про этот разрыв
+						</OpenAssistantButton>
+					)
+				}
 			>
 				{isLoading ? (
 					<div className="flex flex-col gap-3">
