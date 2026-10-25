@@ -445,6 +445,58 @@ try {
 		{ "If-Match": '"1"' }
 	);
 	check(salaried.recurringPayment.employeePayment && salaried.version === 2, "Salary must link a payment");
+	const linkedEmployee = await get(`${company}/employees`, "POST", { fullName: "Привязка платежа" });
+	const recurringForSalary = (await get(`${account}/recurring-patterns`)).items.find((p) => p.direction === "OUT");
+	const linkUrl = `${company}/employees/${linkedEmployee.id}/recurring-payment`;
+	const linkBody = {
+		accountId: config.DEMO_ACCOUNT_ID,
+		recurringPatternId: recurringForSalary.id,
+		patternVersion: recurringForSalary.version,
+	};
+	check((await response(linkUrl, "PUT", linkBody)).status === 428, "Link requires employee version");
+	check(
+		(
+			await response(
+				linkUrl,
+				"PUT",
+				{ ...linkBody, patternVersion: recurringForSalary.version + 1 },
+				{ "If-Match": '"1"' }
+			)
+		).status === 409,
+		"Stale recurring payment must not be linked"
+	);
+	const linked = await get(linkUrl, "PUT", linkBody, { "If-Match": '"1"' });
+	check(
+		linked.recurringPayment.id === recurringForSalary.id &&
+			linked.recurringPayment.status === "CONFIRMED" &&
+			linked.recurringPayment.statusSource === "USER" &&
+			linked.recurringPayment.employeePayment &&
+			linked.version === 2,
+		"Link must confirm the existing recurring payment"
+	);
+	check(
+		(await get(`${account}/recurring-patterns`)).items.find((p) => p.id === recurringForSalary.id).version ===
+			recurringForSalary.version + 1,
+		"Link must update the shared recurring payment"
+	);
+	const otherEmployee = await get(`${company}/employees`, "POST", { fullName: "Другой сотрудник" });
+	check(
+		(
+			await response(
+				`${company}/employees/${otherEmployee.id}/recurring-payment`,
+				"PUT",
+				{ ...linkBody, patternVersion: linked.recurringPayment.version },
+				{ "If-Match": '"1"' }
+			)
+		).status === 422,
+		"A recurring payment must not belong to two employees"
+	);
+	await get(linkUrl, "DELETE", undefined, { "If-Match": '"2"' });
+	check(
+		(await get(`${account}/recurring-patterns`)).items.find((p) => p.id === recurringForSalary.id).status ===
+			"EXCLUDED",
+		"Unlink must exclude the shared recurring payment"
+	);
 	check(
 		(await response(`${company}/employees/${employee.id}/archive`, "POST", {})).status === 428,
 		"Archive without If-Match must fail"
