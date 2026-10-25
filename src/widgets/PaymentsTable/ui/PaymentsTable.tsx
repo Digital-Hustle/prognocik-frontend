@@ -42,7 +42,7 @@ const Checkbox = ({ checked, onChange, label }: { checked: boolean; onChange: ()
 		aria-label={label}
 		onClick={onChange}
 		className={cn(
-			"flex size-5 shrink-0 items-center justify-center rounded-2xs border transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+			"relative flex size-5 shrink-0 items-center justify-center rounded-2xs border transition-colors outline-none before:absolute before:-inset-2.5 before:content-[''] focus-visible:ring-2 focus-visible:ring-ring",
 			checked ? "border-brand bg-brand text-white" : "border-border-strong bg-card"
 		)}
 	>
@@ -315,7 +315,7 @@ export const PaymentsTable = memo(({ companyId, accountId, canEdit, dataEnd }: P
 						))}
 					</ul>
 				) : (
-					<div className="overflow-x-auto">
+					<div className="relative overflow-x-auto">
 						<table className="w-full min-w-[760px] text-sm">
 							<thead>
 								<tr className="border-y border-border text-left text-xs text-muted-foreground">

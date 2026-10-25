@@ -35,14 +35,14 @@ export const Stat = memo(({ label, value, sub, icon, tone = "plain", className }
 		)}
 		<dt
 			className={cn(
-				"relative flex items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0",
+				"relative flex items-start gap-2 text-sm leading-snug text-pretty [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0",
 				tone === "hero" ? "text-hero-muted" : tone === "plain" ? "text-muted-foreground" : "opacity-80"
 			)}
 		>
 			{icon}
 			{label}
 		</dt>
-		<dd className="relative font-display text-xl font-semibold tracking-display break-words tabular-nums sm:text-3xl">
+		<dd className="relative font-display text-xl font-semibold tracking-display break-words tabular-nums min-[400px]:text-2xl sm:text-3xl">
 			{value}
 		</dd>
 		{sub && (

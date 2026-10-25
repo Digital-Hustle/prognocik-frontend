@@ -37,7 +37,7 @@ export const ModelMetricsTable = memo(({ quality }: { quality: QualityMetrics })
 					Все модели оценены на одних и тех же днях. MAE и RMSE — в рублях, MSE — в рублях в квадрате.
 				</p>
 			</CardHeader>
-			<div className="overflow-x-auto p-2 sm:p-3">
+			<div className="relative overflow-x-auto p-2 sm:p-3">
 				<table className="w-full min-w-[720px] text-sm">
 					<thead>
 						<tr className="text-xs text-muted-foreground">

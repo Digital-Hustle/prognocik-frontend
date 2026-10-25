@@ -88,21 +88,12 @@ const NAV: NavItem[] = [
 			</span>
 		),
 	},
-	{
-		to: RoutePath.settings,
-		label: "Настройки",
-		icon: (
-			<span className="hidden 2xl:flex">
-				<Settings2 />
-			</span>
-		),
-	},
 ];
 
 const ProfileMenu = memo(() => {
 	const me = useSelector(getUserAuthData);
 	const { logout, isLoading } = useLogout();
-	const p = usePopover(260, 260);
+	const p = usePopover(260, 300);
 	const initial = (me?.displayName || me?.email || "?").trim().charAt(0).toUpperCase();
 
 	return (
@@ -130,6 +121,14 @@ const ProfileMenu = memo(() => {
 				<div className="px-2 pb-2">
 					<ThemeSwitcher />
 				</div>
+				<Link
+					to={RoutePath.settings}
+					onClick={() => p.setOpen(false)}
+					className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-surface"
+				>
+					<Settings2 className="size-4" />
+					Настройки прогноза
+				</Link>
 				<Link
 					to={RoutePath.profile}
 					onClick={() => p.setOpen(false)}

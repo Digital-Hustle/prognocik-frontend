@@ -369,7 +369,7 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 				{origins.isLoading ? (
 					<Skeleton className="m-4 h-24" />
 				) : (
-					<div className="overflow-x-auto p-2 sm:p-3">
+					<div className="relative overflow-x-auto p-2 sm:p-3">
 						<table className="w-full min-w-[480px] text-sm">
 							<thead>
 								<tr className="text-left text-xs text-muted-foreground">
