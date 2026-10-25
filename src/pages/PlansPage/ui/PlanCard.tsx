@@ -43,11 +43,14 @@ export const PlanCard = memo(
 			>
 				<Card
 					className={cn(
-						"flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-center lg:gap-5",
+						"flex flex-col gap-3 p-4 sm:p-5",
+						!compactDate && "lg:flex-row lg:items-center lg:gap-5",
 						p.overdue && "ring-1 ring-danger-border"
 					)}
 				>
-					<div className="flex w-full min-w-0 items-center gap-3 lg:w-auto lg:flex-1">
+					<div
+						className={cn("flex w-full min-w-0 items-center gap-3", !compactDate && "lg:w-auto lg:flex-1")}
+					>
 						{!compactDate && (
 							<div className="flex w-14 shrink-0 flex-col items-center rounded-md bg-muted py-1.5">
 								<span className="font-display text-lg leading-tight font-semibold">
@@ -74,7 +77,7 @@ export const PlanCard = memo(
 							{p.note && <div className="truncate text-xs text-subtle-foreground">{p.note}</div>}
 						</div>
 					</div>
-					<div className="flex w-full flex-col gap-1.5 lg:w-56">
+					<div className={cn("flex w-full flex-col gap-1.5", !compactDate && "lg:w-56")}>
 						<div className="flex items-baseline justify-between gap-2">
 							<span
 								className={cn(

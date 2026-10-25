@@ -231,8 +231,8 @@ const PlansPage = () => {
 						/>
 					</Card>
 				) : view === "calendar" ? (
-					<div className="grid items-start gap-4 xl:grid-cols-5">
-						<div className="xl:col-span-3">
+					<div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-5">
+						<div className="min-w-0 xl:col-span-3">
 							<PlansCalendar
 								month={month}
 								onMonth={setMonth}
@@ -242,7 +242,7 @@ const PlansPage = () => {
 								onSelect={setSelected}
 							/>
 						</div>
-						<div className="flex flex-col gap-3 xl:col-span-2">
+						<div className="flex min-w-0 flex-col gap-3 xl:col-span-2">
 							<h2 className="font-display text-base font-semibold">
 								{selected ? formatDayFull(selected) : "Выберите день"}
 							</h2>
