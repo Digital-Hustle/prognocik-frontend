@@ -2,6 +2,7 @@ import type { Job } from "@/entities/Job";
 import { recurringApi } from "@/entities/Recurring";
 import type { PatternStatus, RecurringPattern } from "@/entities/Recurring";
 import { accountUrl, idempotency, ifMatch, rtkApi } from "@/shared/api/rtkApi";
+import type { ItemsRs } from "@/shared/api/types";
 
 export const detectRecurringApi = rtkApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -15,6 +16,20 @@ export const detectRecurringApi = rtkApi.injectEndpoints({
 				body: { asOfDate },
 				headers: idempotency(idempotencyKey),
 			}),
+		}),
+		/** POST без тела и If-Match; решённые вручную не трогает; повтор вернёт пустой items. После — прогноз STALE */
+		confirmAllDetected: build.mutation<ItemsRs<RecurringPattern>, { companyId: string; accountId: string }>({
+			query: ({ companyId, accountId }) => ({
+				url: accountUrl(companyId, accountId, "/recurring-patterns/confirm-detected"),
+				method: "POST",
+			}),
+			invalidatesTags: (_rs, error, { accountId }) =>
+				error
+					? [{ type: "Recurring", id: accountId }]
+					: [
+							{ type: "Recurring", id: accountId },
+							{ type: "Dashboard", id: accountId },
+						],
 		}),
 		decideRecurring: build.mutation<
 			RecurringPattern,
@@ -56,4 +71,5 @@ export const detectRecurringApi = rtkApi.injectEndpoints({
 	}),
 });
 
-export const { useCreateDetectionJobMutation, useDecideRecurringMutation } = detectRecurringApi;
+export const { useCreateDetectionJobMutation, useDecideRecurringMutation, useConfirmAllDetectedMutation } =
+	detectRecurringApi;

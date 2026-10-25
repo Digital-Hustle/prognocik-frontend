@@ -6,7 +6,7 @@ import { useCategoryNames } from "@/entities/Payment";
 import { describeSchedule, useListRecurringPatternsQuery } from "@/entities/Recurring";
 import type { PatternStatus } from "@/entities/Recurring";
 import { useWorkspace } from "@/entities/Workspace";
-import { DecideRecurringButtons, DetectRecurringButton } from "@/features/DetectRecurring";
+import { ConfirmAllDetectedButton, DecideRecurringButtons, DetectRecurringButton } from "@/features/DetectRecurring";
 import { fadeUp, popIn, tween } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
 import { formatDayShort } from "@/shared/lib/date/date";
@@ -53,13 +53,22 @@ const RecurringPage = () => {
 				title="Регулярные платежи"
 				sub="Аренда, зарплата, подписки, постоянные клиенты. Подтверждённые регулярности прогноз ставит на свои даты, а не размазывает по средним."
 				actions={
-					<DetectRecurringButton
-						companyId={companyId}
-						accountId={accountId}
-						disabled={!canEdit || !account.data}
-						asOfDate={dataAsOfDate(account.data)}
-						label={data?.items.length ? "Искать заново" : "Найти регулярные платежи"}
-					/>
+					<div className="flex flex-wrap items-center gap-2">
+						{canEdit && count("DETECTED") > 0 && (
+							<ConfirmAllDetectedButton
+								companyId={companyId}
+								accountId={accountId}
+								count={count("DETECTED")}
+							/>
+						)}
+						<DetectRecurringButton
+							companyId={companyId}
+							accountId={accountId}
+							disabled={!canEdit || !account.data}
+							asOfDate={dataAsOfDate(account.data)}
+							label={data?.items.length ? "Искать заново" : "Найти регулярные платежи"}
+						/>
+					</div>
 				}
 			/>
 
