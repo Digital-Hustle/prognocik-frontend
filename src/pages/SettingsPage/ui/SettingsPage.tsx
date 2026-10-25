@@ -1,9 +1,10 @@
-import { Anchor, CalendarCheck, SlidersHorizontal, Users } from "lucide-react";
+import { Anchor, Building2, CalendarCheck, Landmark, SlidersHorizontal, TriangleAlert, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { ROLE_LABEL, useGetAccountQuery, useGetCompanyQuery, useListMembersQuery } from "@/entities/Company";
 import { useWorkspace } from "@/entities/Workspace";
 import { CompletenessForm } from "@/features/ConfirmCompleteness";
 import { ForecastSettingsForm } from "@/features/EditForecastSettings";
+import { ArchiveButton, EditAccountForm, EditCompanyForm } from "@/features/EditOrganization";
 import { BalanceAnchorForm } from "@/features/SetBalanceAnchor";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { formatDay, formatInstant } from "@/shared/lib/date/date";
@@ -112,6 +113,32 @@ const SettingsPage = () => {
 				animate="show"
 				className="grid gap-4 lg:grid-cols-2"
 			>
+				{company.data && (
+					<Section
+						icon={<Building2 />}
+						title="Компания"
+						sub="Название, форма и реквизиты"
+					>
+						<EditCompanyForm
+							key={`${company.data.id}:${company.data.version}`}
+							company={company.data}
+							disabled={!perms?.canEditCompany}
+						/>
+					</Section>
+				)}
+				{account.data && (
+					<Section
+						icon={<Landmark />}
+						title="Счёт"
+						sub="Название, банк, номер и код в выписке"
+					>
+						<EditAccountForm
+							key={`${account.data.id}:${account.data.version}`}
+							account={account.data}
+							disabled={!perms?.canImport}
+						/>
+					</Section>
+				)}
 				<div className="lg:col-span-2">
 					<Section
 						icon={<SlidersHorizontal />}
@@ -176,6 +203,41 @@ const SettingsPage = () => {
 									))}
 								</ul>
 							)}
+						</Section>
+					</div>
+				)}
+				{perms?.canManageMembers && company.data && (
+					<div className="lg:col-span-2">
+						<Section
+							icon={<TriangleAlert />}
+							title="Архив"
+							sub="Данные сохраняются, но менять их будет нельзя"
+						>
+							<div className="flex flex-wrap gap-3">
+								{account.data && !account.data.archived && (
+									<ArchiveButton
+										key={`a:${account.data.id}:${account.data.version}`}
+										target={{
+											kind: "account",
+											companyId,
+											accountId,
+											name: account.data.name,
+											version: account.data.version,
+										}}
+									/>
+								)}
+								{!company.data.archived && (
+									<ArchiveButton
+										key={`c:${company.data.id}:${company.data.version}`}
+										target={{
+											kind: "company",
+											companyId,
+											name: company.data.name,
+											version: company.data.version,
+										}}
+									/>
+								)}
+							</div>
 						</Section>
 					</div>
 				)}
