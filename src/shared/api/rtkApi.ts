@@ -2,6 +2,7 @@ import { createAction } from "@reduxjs/toolkit";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { csrfHeader, ensureCsrf, resetCsrf } from "./csrf";
+import { apiFetch, isDemoRequest } from "./demoTransport";
 import { toProblem } from "./problem";
 
 /**
@@ -19,6 +20,7 @@ export const sessionExpired = createAction("api/sessionExpired");
 
 const rawBaseQuery = fetchBaseQuery({
 	baseUrl: __API__,
+	fetchFn: apiFetch,
 	credentials: "include",
 	prepareHeaders: (headers) => {
 		if (!headers.has("Accept")) headers.set("Accept", "application/json");
@@ -71,6 +73,7 @@ export const gatewayBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBas
 	const request: FetchArgs = typeof args === "string" ? { url: args } : args;
 	const method = (request.method ?? "GET").toUpperCase();
 	const mutating = !SAFE.has(method);
+	if (isDemoRequest(request.url)) return rawBaseQuery(request, api, extra);
 
 	if (mutating) {
 		try {

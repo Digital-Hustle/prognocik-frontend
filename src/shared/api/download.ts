@@ -1,3 +1,4 @@
+import { apiFetch } from "./demoTransport";
 import type { ApiProblem } from "./problem";
 
 /** Ошибка скачивания в форме, которую понимает problemMessage() */
@@ -18,7 +19,7 @@ export class DownloadError extends Error {
 export async function downloadFile(url: string, fallbackName: string): Promise<string> {
 	let rs: Response;
 	try {
-		rs = await fetch(`${__API__}${url}`, { credentials: "include" });
+		rs = await apiFetch(new URL(`${__API__}${url}`, window.location.origin), { credentials: "include" });
 	} catch {
 		throw new DownloadError(0, null);
 	}

@@ -5,6 +5,7 @@ import { getUserAuthData } from "@/entities/User";
 import { EditProfileForm } from "@/features/EditProfile";
 import { useLogout } from "@/features/Logout";
 import { SessionsList } from "@/features/ManageSessions";
+import { DemoModeToggle } from "@/features/ToggleDemoMode";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { formatInstant } from "@/shared/lib/date/date";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
@@ -66,6 +67,14 @@ const ProfilePage = () => {
 					</Card>
 				</motion.div>
 			</motion.div>
+			<details className="rounded-lg border border-border bg-card p-4 sm:p-6">
+				<summary className="cursor-pointer text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">
+					Дополнительно
+				</summary>
+				<div className="mt-3">
+					<DemoModeToggle />
+				</div>
+			</details>
 		</div>
 	);
 };
