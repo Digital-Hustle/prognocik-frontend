@@ -14,3 +14,5 @@ export {
 	useGetExpectedPaymentQuery,
 	useListAllocationsQuery,
 } from "./api/planApi";
+export { SourceBadge } from "./ui/SourceBadge";
+export { BITRIX_SYSTEM, describeExternalSystem, isBitrixPlan } from "./lib/externalSystem";

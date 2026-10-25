@@ -25,6 +25,7 @@ import {
 	total,
 } from "./data";
 import type { AccountData } from "./data";
+import { demoBitrixStatus, demoBitrixSync, demoEmployees, demoPaymentCalendar, demoTaxCalendar } from "./integrations";
 import { analytics, assistantAnswer, dashboard, filteredPayments, gapDetails, planFact } from "./views";
 
 type Body = Record<string, unknown>;
@@ -153,6 +154,122 @@ function exportResult(result: Forecast | ReturnType<typeof makeBacktest>, kind: 
 		return file(`\uFEFF${csv.join("\r\n")}`, `result-${result.id}.csv`, "text/csv");
 	}
 	return fail(404, "NOT_FOUND", "Файл не найден");
+}
+
+function employeeRoute(request: Request, parts: string[], body: Body, companyId: string): Response {
+	const list = demoEmployees(companyId),
+		method = request.method;
+	if (parts.length === 3) {
+		if (method === "GET")
+			return json(
+				page(
+					list.filter(
+						(e) => !e.archived || new URL(request.url).searchParams.get("includeArchived") === "true"
+					),
+					new URL(request.url).searchParams
+				)
+			);
+		if (method === "POST") {
+			if (!text(body, "fullName").trim()) return fail(422, "VALIDATION_ERROR", "Укажите ФИО");
+			const employee = {
+				id: id(),
+				companyId,
+				fullName: text(body, "fullName").trim(),
+				position: text(body, "position") || null,
+				note: text(body, "note") || null,
+				archived: false,
+				recurringPayment: null,
+				version: 1,
+				createdAt: now(),
+				updatedAt: now(),
+			};
+			list.unshift(employee);
+			return json(employee, 201);
+		}
+	}
+	const employee = required(list.find((e) => e.id === parts[3])),
+		action = parts[4];
+	if (method === "GET" && !action) return json(employee);
+	version(request, employee);
+	if (employee.archived) return fail(422, "EMPLOYEE_ARCHIVED", "Сотрудник в архиве");
+	const touch = () => {
+		employee.version++;
+		employee.updatedAt = now();
+		stale(companyId);
+		return json(employee);
+	};
+	if (!action && method === "PUT") {
+		Object.assign(employee, {
+			fullName: text(body, "fullName").trim() || employee.fullName,
+			position: text(body, "position") || null,
+			note: text(body, "note") || null,
+		});
+		employee.version++;
+		employee.updatedAt = now();
+		return json(employee);
+	}
+	if (action === "salary" && method === "PUT") {
+		validateAmount(text(body, "amount"));
+		const schedule = body.schedule as NonNullable<typeof employee.recurringPayment>["schedule"];
+		const key = text(body, "counterpartyInn")
+			? `inn:${text(body, "counterpartyInn")}`
+			: `name:${text(body, "counterpartyName").toLowerCase()}`;
+		const old = employee.recurringPayment;
+		employee.recurringPayment = {
+			id: old?.id ?? id(),
+			accountId: text(body, "accountId"),
+			direction: "OUT",
+			categoryCode: "SALARY",
+			counterpartyKey: key,
+			status: "CONFIRMED",
+			statusSource: "USER",
+			schedule,
+			amount: text(body, "amount"),
+			observations: 0,
+			firstSeen: null,
+			lastSeen: null,
+			detectorVersion: "MANUAL_V1",
+			employeePayment: true,
+			version: old ? old.version + 1 : 0,
+		};
+		return touch();
+	}
+	if (action === "recurring-payment" && method === "PUT") {
+		const { data } = state(text(body, "accountId"), companyId);
+		const index = data.recurring.findIndex((p) => p.id === text(body, "recurringPatternId"));
+		const pattern = required(data.recurring[index]);
+		if (pattern.direction !== "OUT") return fail(422, "PAYROLL_DIRECTION", "Выберите списание");
+		if (typeof body.patternVersion !== "number")
+			return fail(422, "PATTERN_VERSION_REQUIRED", "Нужна текущая версия платежа");
+		if (body.patternVersion !== pattern.version)
+			return fail(409, "VERSION_CONFLICT", "Платёж уже изменился. Обновите данные.");
+		if (
+			(employee.recurringPayment && employee.recurringPayment.id !== pattern.id) ||
+			list.some((e) => e.id !== employee.id && e.recurringPayment?.id === pattern.id)
+		)
+			return fail(422, "PAYROLL_ALREADY_LINKED", "У сотрудника или платежа уже есть другая связь");
+		const linked = {
+			...pattern,
+			direction: "OUT" as const,
+			status: "CONFIRMED" as const,
+			statusSource: "USER" as const,
+			employeePayment: true,
+			version: pattern.version + 1,
+		};
+		data.recurring[index] = linked;
+		employee.recurringPayment = linked;
+		return touch();
+	}
+	if (action === "recurring-payment" && method === "DELETE") {
+		if (employee.recurringPayment) employee.recurringPayment.status = "EXCLUDED";
+		return touch();
+	}
+	if (action === "archive" && method === "POST") {
+		if (employee.recurringPayment) employee.recurringPayment.status = "EXCLUDED";
+		employee.archived = true;
+		return touch();
+	}
+	return fail(404, "DEMO_ENDPOINT_NOT_FOUND", "Этот запрос не поддерживается демонстрационным режимом");
 }
 
 async function route(request: Request): Promise<Response> {
@@ -401,6 +518,9 @@ async function route(request: Request): Promise<Response> {
 			return json(payment);
 		}
 	}
+	if (parts[2] === "tax-calendar" && method === "GET")
+		return json(demoTaxCalendar(Number(params.get("year")) || new Date().getFullYear()));
+	if (parts[2] === "employees") return employeeRoute(request, parts, body, companyId);
 	if (parts[2] !== "accounts")
 		return fail(404, "DEMO_ENDPOINT_NOT_FOUND", "Этот запрос не поддерживается демонстрационным режимом");
 	const { account, data } = state(parts[3], companyId),
@@ -721,6 +841,24 @@ async function route(request: Request): Promise<Response> {
 			const alert = required(data.alerts.find((a) => a.id === tail[1]));
 			alert.acknowledgedAt = now();
 			return json(alert);
+		}
+	}
+	if (root === "payment-calendar" && method === "GET") {
+		const fromDate = params.get("fromDate") ?? "",
+			toDate = params.get("toDate") ?? "";
+		validateRange(fromDate, toDate);
+		return json(demoPaymentCalendar(account, data, fromDate, toDate, companyId));
+	}
+	if (root === "integrations" && tail[1] === "bitrix24") {
+		if (tail.length === 2 && method === "GET") return json(demoBitrixStatus(data));
+		if (tail[2] === "sync" && method === "POST") {
+			if (body.includeDeals === false && body.includeInvoices === false)
+				return fail(422, "NOTHING_TO_SYNC", "Включите сделки или счета");
+			if (body.mode !== "DEMO")
+				return fail(422, "BITRIX_NOT_CONFIGURED", "В демо-режиме доступны только демо-данные");
+			const report = demoBitrixSync(account, data, body);
+			if (report.dataChanged) stale(companyId);
+			return json(report);
 		}
 	}
 	if (root === "assistant" && tail[1] === "chat" && method === "POST") {

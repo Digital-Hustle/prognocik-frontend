@@ -1,7 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { AuthPage } from "@/pages/AuthPage";
+import { EmployeesPage } from "@/pages/EmployeesPage";
 import { ForecastPage } from "@/pages/ForecastPage";
 import { ImportPage } from "@/pages/ImportPage";
+import { IntegrationsPage } from "@/pages/IntegrationsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { OperationsPage } from "@/pages/OperationsPage";
@@ -80,6 +82,20 @@ export const routeConfig: Record<AppRoutes, AppRoutesProps> = {
 	[AppRoutes.QUALITY]: {
 		path: RoutePath.quality,
 		element: <QualityPage />,
+		authOnly: true,
+		workspaceOnly: true,
+		withLayout: true,
+	},
+	[AppRoutes.INTEGRATIONS]: {
+		path: RoutePath.integrations,
+		element: <IntegrationsPage />,
+		authOnly: true,
+		workspaceOnly: true,
+		withLayout: true,
+	},
+	[AppRoutes.EMPLOYEES]: {
+		path: RoutePath.employees,
+		element: <EmployeesPage />,
 		authOnly: true,
 		workspaceOnly: true,
 		withLayout: true,

@@ -1,6 +1,8 @@
 import {
 	BarChart3,
 	CalendarClock,
+	Plug,
+	Users,
 	FlaskConical,
 	LogOut,
 	Repeat2,
@@ -85,6 +87,24 @@ const NAV: NavItem[] = [
 		icon: (
 			<span className="hidden 2xl:flex">
 				<FlaskConical />
+			</span>
+		),
+	},
+	{
+		to: RoutePath.employees,
+		label: "Сотрудники",
+		icon: (
+			<span className="hidden 2xl:flex">
+				<Users />
+			</span>
+		),
+	},
+	{
+		to: RoutePath.integrations,
+		label: "Интеграции",
+		icon: (
+			<span className="hidden 2xl:flex">
+				<Plug />
 			</span>
 		),
 	},
