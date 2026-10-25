@@ -8,6 +8,7 @@ import { toMoneyString, toNumber } from "@/shared/lib/format/money";
 import { Button } from "@/shared/ui/Button/Button";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
 import { Field, Input } from "@/shared/ui/Input/Input";
+import { Select } from "@/shared/ui/Select/Select";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { toast } from "@/shared/ui/Toast/Toast";
 import { useUpdateForecastSettingsMutation } from "../api/settingsMutationApi";
@@ -17,6 +18,12 @@ interface ForecastSettingsFormProps {
 	accountId: string;
 	disabled?: boolean;
 }
+
+/** Допустимые значения algorithm; любое другое бэк отклонит (422) */
+const ALGORITHMS = [
+	{ value: "WEEKDAY_MEAN_V1", label: "Среднее по дню недели", hint: "по умолчанию" },
+	{ value: "WEEKDAY_ROBUST_V2", label: "Устойчивая модель", hint: "праздники РФ, выбросы, шумные дни" },
+];
 
 const num = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
 
@@ -33,8 +40,11 @@ export const ForecastSettingsForm = memo(({ companyId, accountId, disabled }: Fo
 		calibrationStepDays: "",
 	});
 
+	const [algorithm, setAlgorithm] = useState("");
+
 	useEffect(() => {
 		if (!data) return;
+		setAlgorithm(data.algorithm);
 		setForm({
 			windowWeeks: String(data.windowWeeks),
 			horizonDays: String(data.horizonDays),
@@ -66,7 +76,7 @@ export const ForecastSettingsForm = memo(({ companyId, accountId, disabled }: Fo
 			scenarioCount: Math.round(num(form.scenarioCount)),
 			minCalibrationOrigins: Math.round(num(form.minCalibrationOrigins)),
 			calibrationStepDays: Math.round(num(form.calibrationStepDays)),
-			algorithm: data.algorithm,
+			algorithm: algorithm || data.algorithm,
 		};
 		const rs = await update({ companyId, accountId, version: data.version, body });
 		if ("error" in rs) {
@@ -145,10 +155,22 @@ export const ForecastSettingsForm = memo(({ companyId, accountId, disabled }: Fo
 					/>
 				</Field>
 			</div>
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<span className="text-sm text-muted-foreground">
-					Алгоритм: <span className="font-mono text-xs text-foreground">{data.algorithm}</span>
-				</span>
+			<Field
+				label="Алгоритм прогноза"
+				hint="Чтобы прогноз и проверка качества были сопоставимы, запускайте их с одним алгоритмом. Сравнение обеих моделей — в бэктесте."
+			>
+				<Select
+					value={algorithm || data.algorithm}
+					onChange={setAlgorithm}
+					disabled={disabled}
+					options={
+						ALGORITHMS.some((a) => a.value === data.algorithm)
+							? ALGORITHMS
+							: [...ALGORITHMS, { value: data.algorithm, label: data.algorithm, hint: "текущий" }]
+					}
+				/>
+			</Field>
+			<div className="flex flex-wrap items-center justify-end gap-3">
 				<Button
 					type="submit"
 					disabled={disabled || state.isLoading}

@@ -18,6 +18,7 @@ export function Select<T extends string>({
 	id,
 	size = "md",
 	"aria-label": ariaLabel,
+	disabled,
 	...rest
 }: {
 	value: T;
@@ -30,6 +31,7 @@ export function Select<T extends string>({
 	"aria-label"?: string;
 	"aria-describedby"?: string;
 	"aria-invalid"?: boolean;
+	disabled?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	const [active, setActive] = useState(0);
@@ -135,6 +137,7 @@ export function Select<T extends string>({
 				aria-controls={lid}
 				aria-label={ariaLabel}
 				{...rest}
+				disabled={disabled}
 				onClick={() => setOpen((o) => !o)}
 				onKeyDown={onKey}
 				className={cn(
