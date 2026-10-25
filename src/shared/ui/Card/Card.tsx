@@ -15,7 +15,10 @@ export const CardHeader = ({ className, ...p }: React.HTMLAttributes<HTMLDivElem
 );
 export const CardTitle = ({ className, ...p }: React.HTMLAttributes<HTMLHeadingElement>) => (
 	<h2
-		className={cn("min-w-0 truncate font-display text-lg font-semibold tracking-display", className)}
+		className={cn(
+			"min-w-0 font-display text-lg leading-snug font-semibold tracking-display text-pretty",
+			className
+		)}
 		{...p}
 	/>
 );

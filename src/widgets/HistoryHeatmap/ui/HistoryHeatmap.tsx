@@ -30,7 +30,7 @@ export const HistoryHeatmap = memo(({ days, className }: HistoryHeatmapProps) =>
 	}, [days]);
 
 	return (
-		<div className={cn("overflow-x-auto", className)}>
+		<div className={cn("relative overflow-x-auto", className)}>
 			<div className="flex gap-1">
 				<div className="mr-1 flex flex-col gap-1 text-[10px] leading-3 text-subtle-foreground">
 					{["пн", "", "ср", "", "пт", "", "вс"].map((d, i) => (
