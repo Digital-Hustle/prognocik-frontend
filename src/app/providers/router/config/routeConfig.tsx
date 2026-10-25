@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { AuthPage } from "@/pages/AuthPage";
+import { DemoImportPage } from "@/pages/DemoImportPage";
 import { EmployeesPage } from "@/pages/EmployeesPage";
 import { ForecastPage } from "@/pages/ForecastPage";
 import { ImportPage } from "@/pages/ImportPage";
@@ -35,6 +36,11 @@ export const routeConfig: Record<AppRoutes, AppRoutesProps> = {
 	[AppRoutes.ONBOARDING]: {
 		path: RoutePath.onboarding,
 		element: <OnboardingPage />,
+		authOnly: true,
+	},
+	[AppRoutes.DEMO_IMPORT]: {
+		path: RoutePath.demo_import,
+		element: <DemoImportPage />,
 		authOnly: true,
 	},
 	[AppRoutes.FORECAST]: {
