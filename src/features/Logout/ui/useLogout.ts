@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { userActions } from "@/entities/User";
+import { workspaceActions } from "@/entities/Workspace";
 import { rtkApi } from "@/shared/api/rtkApi";
 import { RoutePath } from "@/shared/const/router";
 import { useAppDispatch } from "@/shared/lib/hooks/useAppDispatch/useAppDispatch";
@@ -15,6 +16,7 @@ export function useLogout() {
 	const run = useCallback(async () => {
 		await logout();
 		dispatch(userActions.logout());
+		dispatch(workspaceActions.reset());
 		dispatch(rtkApi.util.resetApiState());
 		navigate(RoutePath.auth, { replace: true });
 	}, [dispatch, logout, navigate]);
