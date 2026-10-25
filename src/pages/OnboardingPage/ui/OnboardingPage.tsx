@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ROLE_LABEL, useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
 import type { Account, Company } from "@/entities/Company";
 import { useWorkspace, workspaceActions } from "@/entities/Workspace";
+import { BulkImportButton } from "@/features/BulkImport";
 import { CreateAccountForm } from "@/features/CreateAccount";
 import { CreateCompanyForm } from "@/features/CreateCompany";
 import { useLogout } from "@/features/Logout";
@@ -206,6 +207,7 @@ const OnboardingPage = () => {
 											<Plus />
 											Добавить компанию
 										</Button>
+										<BulkImportButton />
 									</>
 								)}
 							</motion.div>
