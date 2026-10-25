@@ -3,6 +3,7 @@ import type { ExpectedPayment, PlanRq } from "@/entities/ExpectedPayment";
 import type { Forecast } from "@/entities/Forecast";
 import type { Job } from "@/entities/Job";
 import { addDays, diffDays } from "@/shared/lib/date/date";
+import { demoBulkImport } from "./bulkImports";
 import {
 	accounts,
 	accountState,
@@ -168,6 +169,9 @@ async function route(request: Request): Promise<Response> {
 		method === "GET" || method === "HEAD" || request.headers.get("Content-Type")?.startsWith("multipart/")
 			? {}
 			: ((await request.json().catch(() => ({}))) as Body);
+	if (method === "POST" && ["companies/imports", "companies/operations/imports"].includes(parts.join("/"))) {
+		return demoBulkImport(request, parts[1] === "operations");
+	}
 	if (parts.length === 1) {
 		if (method === "GET") return json(page(companies, params));
 		if (method === "POST") {
