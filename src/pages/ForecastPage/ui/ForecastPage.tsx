@@ -1,4 +1,4 @@
-import { CalendarClock, FileUp, FlaskConical, Info, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarClock, FileUp, FlaskConical, Info, ListTree, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -6,6 +6,7 @@ import { useGetDailyHistoryQuery } from "@/entities/AccountHistory";
 import { dataAsOfDate, useGetAccountQuery } from "@/entities/Company";
 import { QUALITY_LABEL, SCOPE_LABEL, useGetDashboardQuery } from "@/entities/Forecast";
 import { useWorkspace } from "@/entities/Workspace";
+import { DownloadButton } from "@/features/DownloadResult";
 import { PlanFormDialog } from "@/features/EditExpectedPayment";
 import { RunForecastButton } from "@/features/RunForecast";
 import { WhatIfPanel } from "@/features/WhatIfScenario";
@@ -17,6 +18,7 @@ import { formatMoney } from "@/shared/lib/format/money";
 import { formatRatio } from "@/shared/lib/format/percent";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
+import { Dialog } from "@/shared/ui/Dialog/Dialog";
 import { EmptyState } from "@/shared/ui/EmptyState/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
 import { PageHeader } from "@/shared/ui/PageHeader/PageHeader";
@@ -27,6 +29,7 @@ import { Status } from "@/shared/ui/Status/Status";
 import { AlertsPanel } from "@/widgets/AlertsPanel";
 import { ForecastChart, ForecastChartLegend } from "@/widgets/ForecastChart";
 import { ForecastOverview } from "@/widgets/ForecastOverview";
+import { TraceTimeline } from "@/widgets/TraceTimeline";
 import { UpcomingPayments } from "@/widgets/UpcomingPayments";
 
 type Mode = "forecast" | "whatif";
@@ -91,6 +94,7 @@ const ForecastPage = () => {
 	const [scenario, setScenario] = useState<ScenarioResult | null>(null);
 	const onScenario = useCallback((r: ScenarioResult | null) => setScenario(r), []);
 	const [planOpen, setPlanOpen] = useState(false);
+	const [traceOpen, setTraceOpen] = useState(false);
 	const [planPreset, setPlanPreset] = useState<{ amount: string; dueDate: string } | null>(null);
 
 	const preset = useMemo(
@@ -164,14 +168,36 @@ const ForecastPage = () => {
 						: "Прогноз остатка по дням и риск кассового разрыва"
 				}
 				actions={
-					canWrite && !noData ? (
-						<RunForecastButton
-							companyId={companyId}
-							accountId={accountId}
-							asOfDate={runAsOf}
-							externalBusy={running.length > 0}
-							label={f ? "Пересчитать" : "Рассчитать прогноз"}
-						/>
+					!noData ? (
+						<div className="flex flex-wrap items-center gap-2">
+							{f && (
+								<>
+									<Button
+										size="sm"
+										variant="outline"
+										onClick={() => setTraceOpen(true)}
+									>
+										<ListTree />
+										Лог расчёта
+									</Button>
+									<DownloadButton
+										companyId={companyId}
+										accountId={accountId}
+										resultId={f.id}
+										file="forecast-csv"
+									/>
+								</>
+							)}
+							{canWrite && (
+								<RunForecastButton
+									companyId={companyId}
+									accountId={accountId}
+									asOfDate={runAsOf}
+									externalBusy={running.length > 0}
+									label={f ? "Пересчитать" : "Рассчитать прогноз"}
+								/>
+							)}
+						</div>
 					) : undefined
 				}
 			/>
@@ -443,6 +469,16 @@ const ForecastPage = () => {
 					</motion.div>
 				</>
 			)}
+
+			<Dialog
+				open={traceOpen}
+				onClose={() => setTraceOpen(false)}
+				title="Лог расчёта"
+				description="Как получен прогноз: проверка входа, окно обучения, регулярные платежи, планы, каждый день и риск"
+				className="sm:max-w-3xl"
+			>
+				<TraceTimeline trace={f?.trace} />
+			</Dialog>
 
 			<PlanFormDialog
 				open={planOpen}

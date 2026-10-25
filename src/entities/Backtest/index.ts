@@ -1,4 +1,16 @@
-export type { Backtest, BacktestOrigin, HorizonMetric, GapMetrics, RiskMetrics, CalibrationBin } from "./model/types";
+export type {
+	Backtest,
+	BacktestOrigin,
+	HorizonMetric,
+	GapMetrics,
+	RiskMetrics,
+	CalibrationBin,
+	DayComparison,
+	ConfusionMatrix,
+	ModelScore,
+	ModelSelection,
+	QualityMetrics,
+} from "./model/types";
 export {
 	backtestApi,
 	useListBacktestsQuery,

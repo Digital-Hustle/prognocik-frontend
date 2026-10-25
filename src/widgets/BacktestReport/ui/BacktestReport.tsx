@@ -1,3 +1,4 @@
+import { Info, TriangleAlert } from "lucide-react";
 import { motion } from "motion/react";
 import { memo, useMemo } from "react";
 import {
@@ -25,6 +26,11 @@ import { Card, CardHeader, CardTitle } from "@/shared/ui/Card/Card";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { Stat } from "@/shared/ui/Stat/Stat";
 import { Status } from "@/shared/ui/Status/Status";
+import { ratioText } from "../lib";
+import { ConfusionMatrixCard } from "./ConfusionMatrixCard";
+import { ForecastVsActual } from "./ForecastVsActual";
+import { ModelMetricsTable } from "./ModelMetricsTable";
+import { ModelSelectionCard } from "./ModelSelectionCard";
 
 interface BacktestReportProps {
 	companyId: string;
@@ -65,6 +71,9 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 	);
 	const gm = b.gapMetrics;
 	const originItems = origins.data?.items ?? b.origins ?? [];
+	const q = b.quality ?? null;
+	const overlapping = b.warnings.some((w) => w.code === "OVERLAPPING_ORIGINS");
+	const otherWarnings = b.warnings.filter((w) => w.code !== "OVERLAPPING_ORIGINS");
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -107,6 +116,76 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 					sub={gm?.precision === null || !gm ? undefined : `точность ${formatRatio(gm.precision)}`}
 				/>
 			</motion.dl>
+
+			{!q && (
+				<Notice icon={<Info />}>
+					Пересчитайте проверку, чтобы увидеть метрики: у этого результата нет таблиц ошибок и матриц — он
+					посчитан до обновления сервиса.
+				</Notice>
+			)}
+			{overlapping && (
+				<Notice icon={<TriangleAlert />}>
+					Отсечки пересекаются (шаг меньше горизонта), поэтому дневные наблюдения соседних отсечек не
+					независимы. Метрики верны, но доверительные оценки лучше читать осторожно.
+				</Notice>
+			)}
+			{otherWarnings.map((w, i) => (
+				<Notice
+					key={w.code + i}
+					icon={<Info />}
+				>
+					{w.date ? `${formatDay(w.date)}: ` : ""}
+					{w.message}
+				</Notice>
+			))}
+
+			{q && (
+				<>
+					<ModelMetricsTable quality={q} />
+					<div className="grid gap-4 xl:grid-cols-2">
+						<ConfusionMatrixCard
+							title="Разрыв по дням"
+							subtitle="Для каждого проверенного дня: был ли остаток ниже порога по прогнозу и по факту"
+							matrix={q.primary.dailyMatrix}
+						/>
+						<ConfusionMatrixCard
+							title="Разрыв в ближайшие 30 дней"
+							subtitle="Для каждой отсечки: предсказали ли разрыв в горизонте и случился ли он"
+							matrix={q.originMatrix}
+						/>
+						<ConfusionMatrixCard
+							title="По вероятности сценариев"
+							subtitle={`Разрыв предсказан, если вероятность ниже нуля ≥ ${Math.round(q.scenarioThreshold * 100)}%`}
+							matrix={q.scenarioDailyMatrix}
+						/>
+						<ConfusionMatrixCard
+							title="Ниже страхового буфера"
+							subtitle="Считается только когда в настройках задан буфер"
+							matrix={q.bufferDailyMatrix}
+							event="ниже буфера"
+						/>
+					</div>
+					{q.selection && <ModelSelectionCard selection={q.selection} />}
+					{q.notes.length > 0 && (
+						<Card>
+							<CardHeader>
+								<CardTitle>Как читать эти цифры</CardTitle>
+							</CardHeader>
+							<ul className="flex flex-col gap-2 p-4 text-sm text-muted-foreground sm:p-6">
+								{q.notes.map((n, i) => (
+									<li
+										key={i}
+										className="flex gap-2"
+									>
+										<Info className="mt-0.5 size-4 shrink-0" />
+										{n}
+									</li>
+								))}
+							</ul>
+						</Card>
+					)}
+				</>
+			)}
 
 			<div className="grid gap-4 lg:grid-cols-2">
 				<Card>
@@ -190,6 +269,7 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 								["Предупреждаем за", days(gm.medianLeadDays)],
 								["Ошибка даты", days(gm.dateMaeDays)],
 								["Ошибка суммы нехватки", gm.shortfallMae ? formatMoney(gm.shortfallMae) : few],
+								["F1 по разрывам", ratioText(gm.f1 ?? null)],
 							].map(([label, value]) => (
 								<div
 									key={String(label)}
@@ -214,7 +294,7 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 						<CardTitle>Калибровка вероятности</CardTitle>
 						<span className="text-xs text-muted-foreground">
 							Brier {b.riskMetrics.brierScore === null ? "—" : b.riskMetrics.brierScore.toFixed(3)} ·
-							покрытие 80%-интервала {formatRatio(b.riskMetrics.interval80Coverage)}
+							покрытие 80%-интервала {formatRatio(b.riskMetrics.interval80Coverage)} (идеал ≈ 80%)
 						</span>
 					</CardHeader>
 					<div className="px-2 pt-2 pb-4 sm:px-4">
@@ -280,6 +360,8 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 				</Card>
 			)}
 
+			<ForecastVsActual origins={originItems} />
+
 			<Card>
 				<CardHeader>
 					<CardTitle>Отсечки</CardTitle>
@@ -326,3 +408,10 @@ export const BacktestReport = memo(({ companyId, accountId, backtest: b }: Backt
 		</div>
 	);
 });
+
+const Notice = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
+	<div className="flex items-start gap-2.5 rounded-lg bg-info-soft px-4 py-3 text-sm text-info-soft-foreground [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0">
+		{icon}
+		<span>{children}</span>
+	</div>
+);

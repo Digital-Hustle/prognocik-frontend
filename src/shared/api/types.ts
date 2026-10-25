@@ -25,3 +25,12 @@ export interface ItemsRs<T> {
 }
 
 export type Direction = "IN" | "OUT";
+
+/** TraceStepRs — шаг пошагового лога расчёта. data — плоский словарь строк (деньги — строки с двумя знаками) */
+export interface TraceStep {
+	seq: number;
+	/** Состав стадий не фиксирован: неизвестную стадию показываем как есть */
+	stage: string;
+	message: string;
+	data: Record<string, string>;
+}
