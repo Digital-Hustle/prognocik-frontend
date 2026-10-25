@@ -13,21 +13,6 @@ import { ClarifyCard } from "./ClarifyCard";
 import { ErrorCard } from "./ErrorCard";
 import { SourceChips } from "./SourceChips";
 
-const Warnings = ({ items }: { items: string[] }) =>
-	items.length === 0 ? null : (
-		<ul className="flex flex-col gap-1.5">
-			{items.map((w, i) => (
-				<li
-					key={i}
-					className="flex items-start gap-2 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground"
-				>
-					<Info className="mt-px size-3.5 shrink-0" />
-					<span>{w}</span>
-				</li>
-			))}
-		</ul>
-	);
-
 const AnswerBody = ({
 	rs,
 	period,
@@ -108,26 +93,11 @@ const AnswerBody = ({
 				/>
 			)}
 
-			<Warnings items={rs.warnings} />
-
 			{answered && !rs.forecastAvailable && (
 				<p className="rounded-md bg-surface px-3 py-2 text-xs text-muted-foreground">
 					Прогноз ещё не построен — ответ только по фактическим платежам.
 				</p>
 			)}
-			{answered && rs.forecastAvailable && rs.forecastStale && (
-				<p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-soft-foreground">
-					Прогноз устарел — после новых данных его стоит пересчитать на экране{" "}
-					<Link
-						to={RoutePath.forecast}
-						className="font-medium underline underline-offset-2"
-					>
-						«Прогноз»
-					</Link>
-					.
-				</p>
-			)}
-
 			{hasFacts && (
 				<div>
 					<button

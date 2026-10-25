@@ -6,7 +6,8 @@ export interface UploadStatementArgs {
 	accountId: string;
 	file: File;
 	validationMode: ValidationMode;
-	completeness: "UNKNOWN" | "CONFIRMED_COMPLETE";
+	/** Не передавать — сервер подтвердит период файла сам */
+	completeness?: "UNKNOWN" | "CONFIRMED_COMPLETE";
 	declaredFromDate?: string;
 	declaredToDate?: string;
 	idempotencyKey: string;
@@ -30,8 +31,8 @@ export const uploadApi = rtkApi.injectEndpoints({
 				form.append("file", file);
 				form.append("accountId", accountId);
 				form.append("validationMode", validationMode);
-				form.append("completeness", completeness);
-				if (completeness === "CONFIRMED_COMPLETE" && declaredFromDate && declaredToDate) {
+				if (completeness) form.append("completeness", completeness);
+				if (declaredFromDate && declaredToDate) {
 					form.append("declaredFromDate", declaredFromDate);
 					form.append("declaredToDate", declaredToDate);
 				}

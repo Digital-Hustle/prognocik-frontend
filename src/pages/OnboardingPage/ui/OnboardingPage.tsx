@@ -1,11 +1,10 @@
-import { ArrowLeft, Building2, ChevronRight, Landmark, Plus } from "lucide-react";
+import { ArrowLeft, Building2, ChevronRight, Landmark, Plus, Presentation, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROLE_LABEL, useListAccountsQuery, useListCompaniesQuery } from "@/entities/Company";
 import type { Account, Company } from "@/entities/Company";
 import { useWorkspace, workspaceActions } from "@/entities/Workspace";
-import { BulkImportButton } from "@/features/BulkImport";
 import { CreateAccountForm } from "@/features/CreateAccount";
 import { CreateCompanyForm } from "@/features/CreateCompany";
 import { useLogout } from "@/features/Logout";
@@ -18,9 +17,14 @@ import { AutoHeight } from "@/shared/ui/AutoHeight/AutoHeight";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card } from "@/shared/ui/Card/Card";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
+import { Input } from "@/shared/ui/Input/Input";
 import { Logo } from "@/shared/ui/Logo/Logo";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { Status } from "@/shared/ui/Status/Status";
+
+/** Поиск появляется, когда организаций больше, чем помещается взглядом (после массовой загрузки их сотни) */
+const SEARCH_FROM = 6;
+const VISIBLE = 50;
 
 const Steps = ({ step }: { step: 1 | 2 }) => (
 	<div className="flex items-center gap-2">
@@ -91,7 +95,12 @@ const OnboardingPage = () => {
 		});
 	};
 
-	const list = companies.data?.items.filter((c) => !c.archived) ?? [];
+	const [query, setQuery] = useState("");
+	const all = useMemo(() => companies.data?.items.filter((c) => !c.archived) ?? [], [companies.data]);
+	const list = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		return q ? all.filter((c) => c.name.toLowerCase().includes(q) || c.inn?.includes(q)) : all;
+	}, [all, query]);
 	const accountList = accounts.data?.items.filter((a) => !a.archived) ?? [];
 
 	return (
@@ -99,6 +108,15 @@ const OnboardingPage = () => {
 			<div className="flex items-center justify-between">
 				<Logo sub="Банк Центр-инвест" />
 				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						className="hidden sm:inline-flex"
+						onClick={() => navigate(RoutePath.demo_import)}
+					>
+						<Presentation />
+						Демо
+					</Button>
 					{ws.ready && (
 						<Button
 							variant="ghost"
@@ -175,6 +193,18 @@ const OnboardingPage = () => {
 									/>
 								) : (
 									<>
+										{all.length > SEARCH_FROM && (
+											<Input
+												icon={<Search />}
+												placeholder={`Поиск среди ${all.length} организаций: название или ИНН`}
+												value={query}
+												onChange={(e) => setQuery(e.target.value)}
+												aria-label="Поиск организации"
+											/>
+										)}
+										{query && list.length === 0 && (
+											<p className="text-sm text-muted-foreground">Ничего не нашлось.</p>
+										)}
 										{list.length > 0 && (
 											<motion.ul
 												variants={stagger()}
@@ -182,7 +212,7 @@ const OnboardingPage = () => {
 												animate="show"
 												className="flex flex-col gap-2"
 											>
-												{list.map((c) => (
+												{list.slice(0, VISIBLE).map((c) => (
 													<ChoiceRow
 														key={c.id}
 														icon={<Building2 />}
@@ -199,6 +229,11 @@ const OnboardingPage = () => {
 												))}
 											</motion.ul>
 										)}
+										{list.length > VISIBLE && (
+											<p className="text-xs text-muted-foreground">
+												Показаны {VISIBLE} из {list.length} — уточните поиск.
+											</p>
+										)}
 										<Button
 											variant={list.length ? "outline" : "brand"}
 											size="lg"
@@ -207,7 +242,22 @@ const OnboardingPage = () => {
 											<Plus />
 											Добавить компанию
 										</Button>
-										<BulkImportButton />
+										<button
+											type="button"
+											onClick={() => navigate(RoutePath.demo_import)}
+											className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong p-4 text-left outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring"
+										>
+											<span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground [&_svg]:size-5">
+												<Presentation />
+											</span>
+											<span className="min-w-0 flex-1">
+												<span className="block font-semibold">Демо-показ</span>
+												<span className="block text-sm text-muted-foreground">
+													Загрузить все организации и операции из CSV
+												</span>
+											</span>
+											<ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+										</button>
 									</>
 								)}
 							</motion.div>

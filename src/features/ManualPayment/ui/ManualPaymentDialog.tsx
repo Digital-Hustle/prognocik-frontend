@@ -7,6 +7,7 @@ import type { Direction } from "@/shared/api/types";
 import { addDays, todayIso } from "@/shared/lib/date/date";
 import { toMoneyString } from "@/shared/lib/format/money";
 import { useIdempotencyKey } from "@/shared/lib/hooks/useIdempotencyKey/useIdempotencyKey";
+import { validateInn } from "@/shared/lib/validation/taxIds";
 import { Button } from "@/shared/ui/Button/Button";
 import { DatePicker } from "@/shared/ui/DatePicker/DatePicker";
 import { Dialog } from "@/shared/ui/Dialog/Dialog";
@@ -81,7 +82,8 @@ export const ManualPaymentDialog = memo(
 			else if (!/^\d+([.,]\d{1,2})?$/.test(amount.replace(/\s/g, "")))
 				next.amount = "Не больше двух знаков после запятой";
 			if (date > lastClosed) next.operationDate = "Только за закрытый день — не позже вчерашнего";
-			if (inn && !/^(\d{10}|\d{12})$/.test(inn)) next.counterpartyInn = "ИНН — 10 или 12 цифр";
+			const innError = validateInn(inn);
+			if (innError) next.counterpartyInn = innError;
 			setErrors(next);
 			if (Object.keys(next).length) return;
 

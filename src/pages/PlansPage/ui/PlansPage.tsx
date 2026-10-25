@@ -1,24 +1,19 @@
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, CalendarPlus, Link2, Pencil } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, CalendarPlus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import type { ComponentProps } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useGetCompanyQuery } from "@/entities/Company";
-import {
-	PLAN_SOURCE_LABEL,
-	PLAN_STATUS_LABEL,
-	SourceBadge,
-	isBitrixPlan,
-	useListExpectedPaymentsQuery,
-} from "@/entities/ExpectedPayment";
+import { useListExpectedPaymentsQuery } from "@/entities/ExpectedPayment";
 import type { ExpectedPayment } from "@/entities/ExpectedPayment";
 import { useCategoryNames } from "@/entities/Payment";
+import { useGetTaxCalendarQuery } from "@/entities/TaxCalendar";
 import type { TaxCalendarItem } from "@/entities/TaxCalendar";
 import { useWorkspace } from "@/entities/Workspace";
 import { AllocationsDialog } from "@/features/AllocatePayment";
-import { CancelPlanButton, PlanFormDialog } from "@/features/EditExpectedPayment";
-import { fadeUp, stagger, tween } from "@/shared/config/motion";
-import { cn } from "@/shared/lib/cn/cn";
-import { addDays, formatDay, formatDayShort, formatRelativeDays, todayIso } from "@/shared/lib/date/date";
+import { PlanFormDialog } from "@/features/EditExpectedPayment";
+import { stagger } from "@/shared/config/motion";
+import { addDays, formatDayFull, todayIso } from "@/shared/lib/date/date";
 import { formatMoney, toNumber } from "@/shared/lib/format/money";
 import { Button } from "@/shared/ui/Button/Button";
 import { Card } from "@/shared/ui/Card/Card";
@@ -27,72 +22,126 @@ import type { DateRange } from "@/shared/ui/DatePicker/DatePicker";
 import { EmptyState } from "@/shared/ui/EmptyState/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState/ErrorState";
 import { PageHeader } from "@/shared/ui/PageHeader/PageHeader";
-import { Progress } from "@/shared/ui/Progress/Progress";
 import { Segmented } from "@/shared/ui/Segmented/Segmented";
 import { Skeleton } from "@/shared/ui/Skeleton/Skeleton";
 import { Stat } from "@/shared/ui/Stat/Stat";
-import { Status } from "@/shared/ui/Status/Status";
 import { PaymentCalendar } from "@/widgets/PaymentCalendar";
+import { PlanFactPanel } from "@/widgets/PlanFactPanel";
+import { PlansCalendar, monthGrid, monthStart } from "@/widgets/PlansCalendar";
 import { TaxCalendar } from "@/widgets/TaxCalendar";
+import { PlanCard } from "./PlanCard";
 
 type Show = "open" | "all";
-type View = "list" | "calendar";
+type View = "calendar" | "list" | "obligations" | "fact";
+
+const VIEWS: View[] = ["calendar", "list", "obligations", "fact"];
+const isOpen = (p: ExpectedPayment) => p.status === "OPEN" || p.status === "PARTIALLY_SETTLED";
 
 const PlansPage = () => {
 	const { companyId, accountId } = useWorkspace();
 	const company = useGetCompanyQuery(companyId);
 	const canEdit = company.data?.permissions.canManagePlans ?? false;
 	const names = useCategoryNames(companyId);
-	const [range, setRange] = useState<DateRange>({ from: addDays(todayIso(), -30), to: addDays(todayIso(), 60) });
+	const [params, setParams] = useSearchParams();
+	const view: View = VIEWS.find((v) => v === params.get("view")) ?? "calendar";
+	const setView = (v: View) => setParams(v === "calendar" ? {} : { view: v }, { replace: true });
+
+	const today = todayIso();
+	const [month, setMonth] = useState(monthStart(today));
+	const [selected, setSelected] = useState<string | null>(today);
+	const [range, setRange] = useState<DateRange>({ from: addDays(today, -30), to: addDays(today, 60) });
 	const [show, setShow] = useState<Show>("open");
-	const { data, isLoading, error, refetch } = useListExpectedPaymentsQuery({
-		companyId,
-		accountId,
-		from: range.from,
-		to: range.to,
-	});
+
+	const grid = useMemo(() => monthGrid(month), [month]);
+	const span = view === "calendar" ? { from: grid[0], to: grid[grid.length - 1] } : range;
+	const { data, isLoading, error, refetch } = useListExpectedPaymentsQuery(
+		{ companyId, accountId, from: span.from, to: span.to },
+		{ skip: view === "obligations" || view === "fact" }
+	);
+	const tax = useGetTaxCalendarQuery({ companyId, year: Number(month.slice(0, 4)) }, { skip: view !== "calendar" });
+	const taxDays = useMemo(() => new Set(tax.data?.items.map((i) => i.dueDate) ?? []), [tax.data]);
+
 	const [editing, setEditing] = useState<ExpectedPayment | null>(null);
 	const [formOpen, setFormOpen] = useState(false);
-	const [view, setView] = useState<View>("list");
 	const [preset, setPreset] = useState<ComponentProps<typeof PlanFormDialog>["preset"]>();
-	const createFromTax = useCallback((item: TaxCalendarItem) => {
-		setEditing(null);
-		setPreset({ title: item.title, dueDate: item.dueDate, direction: "OUT", source: "TAX" });
-		setFormOpen(true);
-	}, []);
 	const [allocFor, setAllocFor] = useState<ExpectedPayment | null>(null);
 	const [allocOpen, setAllocOpen] = useState(false);
 
-	const items = useMemo(
+	const create = useCallback((p?: ComponentProps<typeof PlanFormDialog>["preset"]) => {
+		setEditing(null);
+		setPreset(p);
+		setFormOpen(true);
+	}, []);
+	const createFromTax = useCallback(
+		(item: TaxCalendarItem) =>
+			create({ title: item.title, dueDate: item.dueDate, direction: "OUT", source: "TAX" }),
+		[create]
+	);
+	const edit = useCallback((p: ExpectedPayment) => {
+		setEditing(p);
+		setFormOpen(true);
+	}, []);
+	const openAlloc = useCallback((p: ExpectedPayment) => {
+		setAllocFor(p);
+		setAllocOpen(true);
+	}, []);
+
+	const visible = useMemo(
 		() =>
 			[...(data?.items ?? [])]
-				.filter((p) => show === "all" || p.status === "OPEN" || p.status === "PARTIALLY_SETTLED")
+				.filter((p) => show === "all" || isOpen(p))
 				.sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1)),
 		[data, show]
 	);
+	const forCalendar = useMemo(() => (data?.items ?? []).filter((p) => p.status !== "CANCELLED"), [data]);
+	const dayPlans = useMemo(
+		() => (selected ? visible.filter((p) => p.dueDate === selected) : []),
+		[visible, selected]
+	);
 
 	const totals = useMemo(() => {
-		const open = (data?.items ?? []).filter((p) => p.status === "OPEN" || p.status === "PARTIALLY_SETTLED");
+		const open = (data?.items ?? []).filter(isOpen);
 		const sum = (dir: "IN" | "OUT") =>
 			open.filter((p) => p.direction === dir).reduce((s, p) => s + (toNumber(p.remainingAmount) ?? 0), 0);
 		return { in: sum("IN"), out: sum("OUT"), overdue: open.filter((p) => p.overdue).length };
 	}, [data]);
 
+	const list = (items: ExpectedPayment[], compactDate = false) => (
+		<motion.ul
+			layout
+			className="flex flex-col gap-2"
+		>
+			<AnimatePresence initial={false}>
+				{items.map((p) => (
+					<PlanCard
+						key={p.id}
+						plan={p}
+						companyId={companyId}
+						accountId={accountId}
+						canEdit={canEdit}
+						names={names}
+						onEdit={edit}
+						onAllocations={openAlloc}
+						compactDate={compactDate}
+					/>
+				))}
+			</AnimatePresence>
+		</motion.ul>
+	);
+
+	const showStats = (view === "calendar" || view === "list") && data;
+
 	return (
 		<div className="flex flex-col gap-4 sm:gap-5">
 			<PageHeader
-				kicker="Будущие обязательства"
-				title="Планы: счета, налоги, обещания"
-				sub="Всё, чего ещё нет в выписке: выставленные счета, налоги по календарю, «клиент обещал заплатить 20-го». Прогноз ставит их на конкретные даты."
+				kicker="Будущие обязательства и контроль"
+				title="Планы и факт"
+				sub="Всё, чего ещё нет в выписке: счета, налоги, «клиент обещал заплатить 20-го». Прогноз ставит планы на даты, а план-факт показывает, что из них сбылось."
 				actions={
-					canEdit ? (
+					canEdit && (view === "calendar" || view === "list") ? (
 						<Button
 							variant="brand"
-							onClick={() => {
-								setEditing(null);
-								setPreset(undefined);
-								setFormOpen(true);
-							}}
+							onClick={() => create(selected && view === "calendar" ? { dueDate: selected } : undefined)}
 						>
 							<CalendarPlus />
 							Новый план
@@ -106,33 +155,19 @@ const PlansPage = () => {
 				onChange={setView}
 				label="Вид"
 				options={[
-					{ value: "list", label: "Список планов" },
-					{ value: "calendar", label: "Календарь платежей" },
+					{ value: "calendar", label: "Календарь" },
+					{ value: "list", label: "Список" },
+					{ value: "obligations", label: "Обязательные платежи" },
+					{ value: "fact", label: "План-факт" },
 				]}
 			/>
 
-			{view === "calendar" && (
-				<PaymentCalendar
-					companyId={companyId}
-					accountId={accountId}
-					names={names}
-				/>
-			)}
-
-			{view === "list" && (
-				<TaxCalendar
-					companyId={companyId}
-					canCreate={canEdit}
-					onCreatePlan={createFromTax}
-				/>
-			)}
-
-			{view === "list" && data && (
+			{showStats && (
 				<motion.dl
 					variants={stagger(0.05)}
 					initial="hidden"
 					animate="show"
-					className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+					className="grid grid-cols-1 gap-3 min-[560px]:grid-cols-3"
 				>
 					<Stat
 						label="Ожидаем поступлений"
@@ -155,192 +190,107 @@ const PlansPage = () => {
 				</motion.dl>
 			)}
 
-			{view === "list" && (
-				<>
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+			{(view === "calendar" || view === "list") && (
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+					{view === "list" && (
 						<div className="sm:w-64">
 							<DateRangePicker
 								value={range}
 								onChange={setRange}
 								presets={[
-									{
-										label: "Ближайший месяц",
-										range: { from: todayIso(), to: addDays(todayIso(), 30) },
-									},
+									{ label: "Ближайший месяц", range: { from: today, to: addDays(today, 30) } },
 									{
 										label: "−30 / +60 дней",
-										range: { from: addDays(todayIso(), -30), to: addDays(todayIso(), 60) },
+										range: { from: addDays(today, -30), to: addDays(today, 60) },
 									},
-									{
-										label: "Квартал вперёд",
-										range: { from: todayIso(), to: addDays(todayIso(), 92) },
-									},
+									{ label: "Квартал вперёд", range: { from: today, to: addDays(today, 92) } },
 								]}
 							/>
 						</div>
-						<Segmented
-							value={show}
-							onChange={setShow}
-							label="Показать"
-							options={[
-								{ value: "open", label: "Открытые" },
-								{ value: "all", label: "Все" },
-							]}
-						/>
-					</div>
-
-					{isLoading ? (
-						<div className="flex flex-col gap-2">
-							{Array.from({ length: 4 }, (_, i) => (
-								<Skeleton
-									key={i}
-									className="h-24 rounded-xl"
-								/>
-							))}
-						</div>
-					) : error ? (
-						<Card>
-							<ErrorState
-								error={error}
-								onRetry={refetch}
-							/>
-						</Card>
-					) : items.length === 0 ? (
-						<Card>
-							<EmptyState
-								icon={<CalendarClock />}
-								title="Планов в этом периоде нет"
-								text="Добавьте налог, аренду, зарплату или ожидаемую оплату — и прогноз станет точнее."
-							/>
-						</Card>
-					) : (
-						<motion.ul
-							layout
-							className="flex flex-col gap-2"
-						>
-							<AnimatePresence initial={false}>
-								{items.map((p) => {
-									const total = toNumber(p.amount) ?? 0;
-									const settled = toNumber(p.settledAmount) ?? 0;
-									const st = PLAN_STATUS_LABEL[p.status];
-									const open = p.status === "OPEN" || p.status === "PARTIALLY_SETTLED";
-									return (
-										<motion.li
-											key={p.id}
-											layout
-											variants={fadeUp}
-											initial="hidden"
-											animate="show"
-											exit={{ opacity: 0, height: 0, transition: tween.exit }}
-										>
-											<Card
-												className={cn(
-													"flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5",
-													p.overdue && "ring-1 ring-danger-border"
-												)}
-											>
-												<div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:flex-1">
-													<div className="flex w-14 shrink-0 flex-col items-center rounded-md bg-muted py-1.5">
-														<span className="font-display text-lg leading-tight font-semibold">
-															{p.dueDate.slice(8)}
-														</span>
-														<span className="text-[11px] text-muted-foreground">
-															{formatDayShort(p.dueDate).split(" ")[1]}
-														</span>
-													</div>
-													<div className="min-w-0 flex-1">
-														<div className="flex flex-wrap items-center gap-2">
-															<span className="truncate font-semibold">{p.title}</span>
-															<Status tone={p.overdue ? "danger" : st.tone}>
-																{p.overdue ? "Просрочен" : st.label}
-															</Status>
-															<SourceBadge doc={p.sourceDocument} />
-														</div>
-														<div className="truncate text-xs text-muted-foreground">
-															{names(p.categoryCode)} · {PLAN_SOURCE_LABEL[p.source]}
-															{p.counterpartyKey ? ` · ${p.counterpartyKey}` : ""} ·{" "}
-															{open
-																? formatRelativeDays(p.dueDate)
-																: formatDay(p.dueDate)}
-														</div>
-														{p.note && (
-															<div className="truncate text-xs text-subtle-foreground">
-																{p.note}
-															</div>
-														)}
-													</div>
-												</div>
-												<div className="flex w-full flex-col gap-1.5 sm:w-56">
-													<div className="flex items-baseline justify-between gap-2">
-														<span
-															className={cn(
-																"font-display font-semibold tabular-nums",
-																p.direction === "IN" && "text-success-soft-foreground"
-															)}
-														>
-															{p.direction === "IN" ? "+" : "−"}
-															{formatMoney(p.amount)}
-														</span>
-														{settled > 0 && (
-															<span className="text-xs text-muted-foreground">
-																оплачено {formatMoney(p.settledAmount)}
-															</span>
-														)}
-													</div>
-													<Progress
-														value={total > 0 ? settled / total : 0}
-														tone={p.status === "SETTLED" ? "lime" : "brand"}
-													/>
-												</div>
-												<div className="flex shrink-0 flex-wrap gap-1">
-													<Button
-														size="sm"
-														variant="quiet"
-														onClick={() => {
-															setAllocFor(p);
-															setAllocOpen(true);
-														}}
-													>
-														<Link2 />
-														Оплаты
-													</Button>
-													{canEdit && open && isBitrixPlan(p.sourceDocument) && (
-														<span
-															className="flex max-w-48 items-center px-2 text-xs text-muted-foreground"
-															title="План создаёт синхронизация с Битрикс24. Ручные правки она перезапишет, а отмену — вернёт, пока сделка открыта."
-														>
-															Меняется в Битрикс24
-														</span>
-													)}
-													{canEdit && open && !isBitrixPlan(p.sourceDocument) && (
-														<>
-															<Button
-																size="sm"
-																variant="ghost"
-																onClick={() => {
-																	setEditing(p);
-																	setFormOpen(true);
-																}}
-															>
-																<Pencil />
-																Изменить
-															</Button>
-															<CancelPlanButton
-																companyId={companyId}
-																accountId={accountId}
-																plan={p}
-															/>
-														</>
-													)}
-												</div>
-											</Card>
-										</motion.li>
-									);
-								})}
-							</AnimatePresence>
-						</motion.ul>
 					)}
-				</>
+					<Segmented
+						value={show}
+						onChange={setShow}
+						label="Показать"
+						options={[
+							{ value: "open", label: "Открытые" },
+							{ value: "all", label: "Все" },
+						]}
+					/>
+				</div>
+			)}
+
+			{(view === "calendar" || view === "list") &&
+				(isLoading ? (
+					<Skeleton className="h-96 rounded-xl" />
+				) : error ? (
+					<Card>
+						<ErrorState
+							error={error}
+							onRetry={refetch}
+						/>
+					</Card>
+				) : view === "calendar" ? (
+					<div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-5">
+						<div className="min-w-0 xl:col-span-3">
+							<PlansCalendar
+								month={month}
+								onMonth={setMonth}
+								plans={show === "open" ? forCalendar.filter(isOpen) : forCalendar}
+								taxDays={taxDays}
+								selected={selected}
+								onSelect={setSelected}
+							/>
+						</div>
+						<div className="flex min-w-0 flex-col gap-3 xl:col-span-2">
+							<h2 className="font-display text-base font-semibold">
+								{selected ? formatDayFull(selected) : "Выберите день"}
+							</h2>
+							{dayPlans.length === 0 ? (
+								<Card>
+									<EmptyState
+										icon={<CalendarClock />}
+										title="В этот день планов нет"
+										text={canEdit ? "Нажмите «Новый план», чтобы добавить." : "Планов на дату нет."}
+									/>
+								</Card>
+							) : (
+								list(dayPlans, true)
+							)}
+						</div>
+					</div>
+				) : visible.length === 0 ? (
+					<Card>
+						<EmptyState
+							icon={<CalendarClock />}
+							title="Планов в этом периоде нет"
+							text="Добавьте налог, аренду, зарплату или ожидаемую оплату — и прогноз станет точнее."
+						/>
+					</Card>
+				) : (
+					list(visible)
+				))}
+
+			{(view === "calendar" || view === "list") && (
+				<TaxCalendar
+					companyId={companyId}
+					canCreate={canEdit}
+					onCreatePlan={createFromTax}
+				/>
+			)}
+
+			{view === "obligations" && (
+				<PaymentCalendar
+					companyId={companyId}
+					accountId={accountId}
+					names={names}
+				/>
+			)}
+			{view === "fact" && (
+				<PlanFactPanel
+					companyId={companyId}
+					accountId={accountId}
+				/>
 			)}
 
 			<PlanFormDialog

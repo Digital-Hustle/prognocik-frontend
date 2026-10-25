@@ -15,7 +15,7 @@ export const ModelSelectionCard = memo(({ selection: s }: { selection: ModelSele
 				{formatDay(s.holdoutFrom)}), которые в выборе не участвовали.
 			</p>
 		</CardHeader>
-		<div className="grid gap-3 p-4 sm:p-6 lg:grid-cols-[1fr_2fr]">
+		<div className="grid grid-cols-1 gap-3 p-4 sm:p-6 lg:grid-cols-[1fr_2fr]">
 			<div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
 				<div className="rounded-md bg-muted p-3">
 					<div className="text-xs text-muted-foreground">Ошибка выбранной ({s.selectedModel})</div>

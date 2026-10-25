@@ -2,6 +2,7 @@ import type { BitrixSyncItem, BitrixSyncReport, BitrixSyncRq } from "@/entities/
 import type { Account } from "@/entities/Company";
 import type { Employee } from "@/entities/Employee";
 import type { ExpectedPayment } from "@/entities/ExpectedPayment";
+import type { OneCSyncItem, OneCSyncReport, OneCSyncRq } from "@/entities/OneC";
 import type { CalendarItem } from "@/entities/PaymentCalendar";
 import { addDays } from "@/shared/lib/date/date";
 import { amount, cents, closedDay, makePlan, now } from "./data";
@@ -69,12 +70,13 @@ export function demoBitrixStatus(data: AccountData) {
 
 /** Демо-синхронизация: повторный запуск ничего не меняет, один документ «выигран» и пропускается */
 export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSyncRq): BitrixSyncReport {
+	const start = rq.fromDate ?? closedDay;
 	const horizon = rq.horizonDays ?? 30;
 	const dryRun = Boolean(rq.dryRun);
 	const items: BitrixSyncItem[] = [];
 	const rows = DEALS.filter((x) => (x.kind === "DEAL" ? rq.includeDeals !== false : rq.includeInvoices !== false));
 	for (const x of rows) {
-		const dueDate = addDays(closedDay, x.days);
+		const dueDate = addDays(start, x.days);
 		const weight = rq.weightByProbability && x.p ? x.p / 100 : 1;
 		const planAmount = amount(BigInt(Math.round(Number(cents(x.sum)) * weight)));
 		const base = {
@@ -139,7 +141,7 @@ export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSy
 		title: "Монтаж линии — ООО «Альфа»",
 		documentAmount: "1200000.00",
 		planAmount: null,
-		dueDate: addDays(closedDay, -3),
+		dueDate: addDays(start, -3),
 		stage: "WON",
 		probability: 100,
 		action: "SKIPPED",
@@ -152,8 +154,8 @@ export function demoBitrixSync(account: Account, data: AccountData, rq: BitrixSy
 		mode: rq.mode ?? "LIVE",
 		portal: "demo.bitrix24.ru",
 		dryRun,
-		from: closedDay,
-		to: addDays(closedDay, horizon),
+		from: start,
+		to: addDays(start, horizon),
 		fetched: items.length,
 		created: count("CREATED"),
 		updated: count("UPDATED"),
@@ -280,4 +282,109 @@ export function demoEmployees(companyId: string): Employee[] {
 		employeesByCompany.set(companyId, list);
 	}
 	return list;
+}
+
+const ONEC_DOCS = [
+	{
+		id: "tax-usn-9m-2026",
+		number: null,
+		title: "Налог по УСН за 9 месяцев (рассчитан в 1С)",
+		dir: "OUT",
+		sum: "25000.00",
+		shift: 3,
+		key: null,
+		cat: "TAXES",
+		src: "TAX",
+	},
+	{
+		id: "bill-2045",
+		number: "СЧ-2045",
+		title: "Счёт поставщика за оборудование",
+		dir: "OUT",
+		sum: "70000.00",
+		shift: 11,
+		key: "inn:7707083893",
+		cat: "SUPPLIERS",
+		src: "INVOICE",
+	},
+	{
+		id: "invoice-1001",
+		number: "СФ-1001",
+		title: "Счёт покупателю ООО «Ромашка»",
+		dir: "IN",
+		sum: "100000.00",
+		shift: 16,
+		key: "inn:7701234567",
+		cat: "SALES",
+		src: "INVOICE",
+	},
+] as const;
+
+/** Имитация выгрузки из 1С: три фиксированных документа, сроки считаются от fromDate (как на сервере) */
+export function demoOneCSync(account: Account, data: AccountData, rq: OneCSyncRq): OneCSyncReport {
+	const from = rq.fromDate ?? addDays(closedDay, 1);
+	const dryRun = Boolean(rq.dryRun);
+	const items: OneCSyncItem[] = ONEC_DOCS.map((d) => {
+		const dueDate = addDays(from, d.shift);
+		const base = {
+			externalId: d.id,
+			documentNumber: d.number,
+			title: d.title,
+			direction: d.dir,
+			amount: d.sum,
+			dueDate,
+		};
+		const existing = data.plans.find(
+			(p) => p.sourceDocument?.externalSystem === "1C_DEMO" && p.sourceDocument.externalId === d.id
+		);
+		if (!existing) {
+			let planId: string | null = null;
+			if (!dryRun) {
+				const plan = makePlan(account, {
+					title: d.title,
+					direction: d.dir,
+					amount: d.sum,
+					remainingAmount: d.sum,
+					dueDate,
+					categoryCode: d.cat,
+					counterpartyKey: d.key,
+					source: d.src,
+					sourceDocument: {
+						externalSystem: "1C_DEMO",
+						externalId: d.id,
+						documentNumber: d.number,
+						issuedDate: closedDay,
+					},
+				});
+				data.plans.unshift(plan);
+				planId = plan.id;
+			}
+			return { ...base, action: "CREATED" as const, reason: null, planId };
+		}
+		if (existing.status === "CANCELLED")
+			return { ...base, action: "SKIPPED" as const, reason: "CANCELLED", planId: existing.id };
+		if (existing.status === "PARTIALLY_SETTLED")
+			return { ...base, action: "SKIPPED" as const, reason: "ALREADY_PAID", planId: existing.id };
+		if (existing.dueDate !== dueDate) {
+			if (!dryRun) {
+				existing.dueDate = dueDate;
+				existing.version++;
+			}
+			return { ...base, action: "UPDATED" as const, reason: null, planId: existing.id };
+		}
+		return { ...base, action: "UNCHANGED" as const, reason: null, planId: existing.id };
+	});
+	const count = (a: OneCSyncItem["action"]) => items.filter((i) => i.action === a).length;
+	return {
+		source: "1C_DEMO",
+		demo: true,
+		dryRun,
+		from,
+		created: count("CREATED"),
+		updated: count("UPDATED"),
+		unchanged: count("UNCHANGED"),
+		skipped: count("SKIPPED"),
+		dataChanged: !dryRun && count("CREATED") + count("UPDATED") > 0,
+		items,
+	};
 }

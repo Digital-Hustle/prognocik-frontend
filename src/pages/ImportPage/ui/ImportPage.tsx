@@ -40,7 +40,7 @@ const ImportPage = () => {
 				sub="CSV с датой, суммой и направлением, контрагентом и ИНН, назначением платежа и остатком на конец дня. Операции сразу разложим по категориям."
 			/>
 
-			<div className="grid gap-4 lg:grid-cols-5">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
 				<motion.div
 					variants={fadeUp}
 					initial="hidden"
