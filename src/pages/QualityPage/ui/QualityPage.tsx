@@ -1,4 +1,4 @@
-import { CalendarCheck, DatabaseZap, FlaskConical, Info } from "lucide-react";
+import { CalendarCheck, DatabaseZap, FlaskConical, Info, ListTree } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useGetDailyHistoryQuery, useGetDataQualityQuery } from "@/entities/AccountHistory";
@@ -8,6 +8,7 @@ import { QUALITY_LABEL } from "@/entities/Forecast";
 import { useGetForecastSettingsQuery } from "@/entities/ForecastSettings";
 import { useWorkspace } from "@/entities/Workspace";
 import { CompletenessForm } from "@/features/ConfirmCompleteness";
+import { DownloadButton } from "@/features/DownloadResult";
 import { RunBacktestForm } from "@/features/RunBacktest";
 import { fadeUp, stagger } from "@/shared/config/motion";
 import { cn } from "@/shared/lib/cn/cn";
@@ -24,6 +25,7 @@ import { Stat } from "@/shared/ui/Stat/Stat";
 import { Status } from "@/shared/ui/Status/Status";
 import { BacktestReport } from "@/widgets/BacktestReport";
 import { HistoryHeatmap } from "@/widgets/HistoryHeatmap";
+import { TraceTimeline } from "@/widgets/TraceTimeline";
 
 const QualityPage = () => {
 	const { companyId, accountId } = useWorkspace();
@@ -37,6 +39,7 @@ const QualityPage = () => {
 	const backtests = useListBacktestsQuery({ companyId, accountId });
 	const [selected, setSelected] = useState("");
 	const [completeOpen, setCompleteOpen] = useState(false);
+	const [traceOpen, setTraceOpen] = useState(false);
 
 	useEffect(() => {
 		const first = backtests.data?.items[0]?.id;
@@ -240,6 +243,37 @@ const QualityPage = () => {
 				</div>
 
 				{backtest && (
+					<div className="flex flex-wrap items-center gap-2">
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() => setTraceOpen(true)}
+						>
+							<ListTree />
+							Лог эксперимента
+						</Button>
+						<DownloadButton
+							companyId={companyId}
+							accountId={accountId}
+							resultId={backtest.id}
+							file="backtest-report"
+						/>
+						<DownloadButton
+							companyId={companyId}
+							accountId={accountId}
+							resultId={backtest.id}
+							file="backtest-trace"
+						/>
+						<DownloadButton
+							companyId={companyId}
+							accountId={accountId}
+							resultId={backtest.id}
+							file="backtest-csv"
+						/>
+					</div>
+				)}
+
+				{backtest && (
 					<BacktestReport
 						companyId={companyId}
 						accountId={accountId}
@@ -247,6 +281,16 @@ const QualityPage = () => {
 					/>
 				)}
 			</section>
+
+			<Dialog
+				open={traceOpen}
+				onClose={() => setTraceOpen(false)}
+				title="Лог эксперимента"
+				description="Как проходила проверка: каждая отсечка, метрики, матрицы, эталоны и выбор модели"
+				className="sm:max-w-3xl"
+			>
+				<TraceTimeline trace={backtest?.trace} />
+			</Dialog>
 
 			<Dialog
 				open={completeOpen}

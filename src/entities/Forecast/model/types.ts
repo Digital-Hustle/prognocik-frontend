@@ -1,4 +1,4 @@
-import type { Direction, Instant, IsoDate, Money, Uuid } from "@/shared/api/types";
+import type { Direction, Instant, IsoDate, Money, TraceStep, Uuid } from "@/shared/api/types";
 
 export type ForecastScope = "HISTORY_ONLY" | "WITH_KNOWN_PLANS";
 export type DataQuality = "GOOD" | "LIMITED" | "INSUFFICIENT";
@@ -94,6 +94,8 @@ export interface Forecast {
 	maxExpectedShortfall: Money | null;
 	days: ForecastDay[];
 	gaps: GapEpisode[];
+	/** Шаги расчёта. null/нет у прогнозов, посчитанных до обновления бэка — просим пересчитать */
+	trace?: TraceStep[] | null;
 	createdAt: Instant;
 }
 
