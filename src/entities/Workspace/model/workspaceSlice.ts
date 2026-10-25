@@ -13,12 +13,16 @@ function load(): WorkspaceSchema {
 		const raw = storage.get(WORKSPACE_LOCAL_STORAGE_KEY);
 		if (raw) {
 			const parsed = JSON.parse(raw) as Partial<WorkspaceSchema>;
-			return { companyId: parsed.companyId ?? null, accountId: parsed.accountId ?? null };
+			return {
+				companyId: parsed.companyId ?? null,
+				accountId: parsed.accountId ?? null,
+				ownerId: parsed.ownerId ?? null,
+			};
 		}
 	} catch {
 		/* битое значение — начинаем с выбора */
 	}
-	return { companyId: null, accountId: null };
+	return { companyId: null, accountId: null, ownerId: null };
 }
 
 function save(state: WorkspaceSchema) {
@@ -38,6 +42,16 @@ export const workspaceSlice = createSlice({
 			state.companyId = action.payload.companyId;
 			state.accountId = action.payload.accountId;
 			save(state);
+		},
+		/** Выбор принадлежит пользователю: чужой (или от старой версии без владельца) не оставляем. */
+		bindOwner: (state, action: PayloadAction<string>) => {
+			if (isDemoMode()) return;
+			if (state.ownerId !== action.payload) {
+				state.companyId = null;
+				state.accountId = null;
+				state.ownerId = action.payload;
+				save(state);
+			}
 		},
 		reset: (state) => {
 			state.companyId = null;
