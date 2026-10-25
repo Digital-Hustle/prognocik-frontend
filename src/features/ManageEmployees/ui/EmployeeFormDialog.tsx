@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import type { Employee } from "@/entities/Employee";
 import { problemMessage } from "@/shared/api/problem";
 import { useIdempotencyKey } from "@/shared/lib/hooks/useIdempotencyKey/useIdempotencyKey";
+import { validateInn } from "@/shared/lib/validation/taxIds";
 import { Button } from "@/shared/ui/Button/Button";
 import { Dialog } from "@/shared/ui/Dialog/Dialog";
 import { Field, Input } from "@/shared/ui/Input/Input";
@@ -18,7 +19,7 @@ interface Props {
 	employee?: Employee | null;
 }
 
-/** Карточка сотрудника: ФИО, должность, заметка. PUT заменяет все три поля — пустые очищаются. */
+/** Карточка сотрудника: ФИО, должность, ИНН, заметка. PUT заменяет все поля — пустые очищаются. */
 export const EmployeeFormDialog = memo(({ open, onClose, companyId, employee }: Props) => {
 	const [create, createState] = useCreateEmployeeMutation();
 	const [update, updateState] = useUpdateEmployeeMutation();
@@ -26,6 +27,7 @@ export const EmployeeFormDialog = memo(({ open, onClose, companyId, employee }: 
 	const [fullName, setFullName] = useState("");
 	const [position, setPosition] = useState("");
 	const [note, setNote] = useState("");
+	const [inn, setInn] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const busy = createState.isLoading || updateState.isLoading;
 
@@ -34,6 +36,7 @@ export const EmployeeFormDialog = memo(({ open, onClose, companyId, employee }: 
 		setFullName(employee?.fullName ?? "");
 		setPosition(employee?.position ?? "");
 		setNote(employee?.note ?? "");
+		setInn(employee?.inn ?? "");
 		setError(null);
 	}, [open, employee]);
 
@@ -41,7 +44,15 @@ export const EmployeeFormDialog = memo(({ open, onClose, companyId, employee }: 
 		e.preventDefault();
 		const name = fullName.trim();
 		if (!name) return setError("Укажите ФИО");
-		const body = { fullName: name, position: position.trim() || null, note: note.trim() || null };
+		const innError = validateInn(inn, "person");
+		if (innError) return setError(innError);
+		// PUT заменяет карточку целиком: пустой ИНН очищается
+		const body = {
+			fullName: name,
+			position: position.trim() || null,
+			note: note.trim() || null,
+			inn: inn.trim() || null,
+		};
 		const rs = employee
 			? await update({ companyId, employeeId: employee.id, version: employee.version, body })
 			: await create({ companyId, body, idempotencyKey: idem.get(body) });
@@ -96,6 +107,18 @@ export const EmployeeFormDialog = memo(({ open, onClose, companyId, employee }: 
 						value={position}
 						maxLength={200}
 						onChange={(e) => setPosition(e.target.value)}
+					/>
+				</Field>
+				<Field
+					label="ИНН"
+					hint="Необязательно. 12 цифр ИНН физлица — как у получателя зарплаты в выписке"
+				>
+					<Input
+						value={inn}
+						inputMode="numeric"
+						maxLength={12}
+						onChange={(e) => setInn(e.target.value.replace(/\D/g, "").slice(0, 12))}
+						placeholder="500100732259"
 					/>
 				</Field>
 				<Field label="Заметка">

@@ -19,7 +19,7 @@ export const OneCIntegration = ({ companyId, accountId }: { companyId: string; a
 	const dashboard = useGetDashboardQuery({ companyId, accountId });
 	const [report, setReport] = useState<OneCSyncReport | null>(null);
 	const perms = company.data?.permissions;
-	const asOf = dataAsOfDate(account.data, dashboard.data?.asOfDate);
+	const asOf = dashboard.data?.suggestedAsOfDate ?? dataAsOfDate(account.data, dashboard.data?.asOfDate);
 	const stale = report?.dataChanged && !report.dryRun;
 
 	return (

@@ -109,6 +109,14 @@ export function dashboard(company: Company, account: Account, data: AccountData)
 		companyId: company.id,
 		accountId: account.id,
 		asOfDate: closedDay,
+		lastDataDate:
+			account.latestBalanceDate && account.latestBalanceDate < closedDay
+				? account.latestBalanceDate
+				: account.latestBalanceDate
+					? closedDay
+					: null,
+		suggestedAsOfDate:
+			account.latestBalanceDate && account.latestBalanceDate < closedDay ? account.latestBalanceDate : closedDay,
 		dataVersion: company.dataVersion,
 		currentBalance:
 			account.latestBalance !== null && account.latestBalanceDate

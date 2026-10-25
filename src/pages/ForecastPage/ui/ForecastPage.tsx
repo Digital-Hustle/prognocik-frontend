@@ -92,7 +92,8 @@ const ForecastPage = () => {
 	}, [hasRunning]);
 
 	// Срез для расчёта — конец данных счёта: выписки бывают историческими, а «вчера» по ним пусто
-	const runAsOf = dataAsOfDate(account.data, d?.asOfDate);
+	// Дату прогноза по умолчанию отдаёт сервер (на «вчера» для архивной выписки придёт NO_START_BALANCE)
+	const runAsOf = d?.suggestedAsOfDate ?? dataAsOfDate(account.data, d?.asOfDate);
 	const chartAsOf = d?.latestForecast?.asOfDate ?? runAsOf;
 	const history = useGetDailyHistoryQuery(
 		{ companyId, accountId, from: addDays(chartAsOf, -41), to: chartAsOf },
@@ -436,7 +437,20 @@ const ForecastPage = () => {
 																className="flex gap-2 text-xs text-muted-foreground"
 															>
 																<Info className="mt-0.5 size-3.5 shrink-0" />
-																{w.message}
+																<span>
+																	{w.message}
+																	{w.code === "BALANCE_MISMATCH" && (
+																		<>
+																			{" "}
+																			<Link
+																				to={RoutePath.quality}
+																				className="font-medium text-foreground underline underline-offset-2"
+																			>
+																				Где расхождения
+																			</Link>
+																		</>
+																	)}
+																</span>
 															</li>
 														))}
 													</ul>

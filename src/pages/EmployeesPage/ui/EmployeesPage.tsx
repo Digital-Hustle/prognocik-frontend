@@ -151,6 +151,7 @@ const EmployeesPage = () => {
 										</div>
 										<div className="truncate text-xs text-muted-foreground">
 											{e.position ?? "Должность не указана"}
+											{e.inn ? ` · ИНН ${e.inn}` : ""}
 											{e.note ? ` · ${e.note}` : ""}
 										</div>
 									</div>

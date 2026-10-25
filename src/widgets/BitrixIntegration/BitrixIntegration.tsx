@@ -29,7 +29,7 @@ export const BitrixIntegration = ({ companyId, accountId }: { companyId: string;
 	const canForecast = perms?.canRunForecast ?? false;
 	const s = status.data;
 	const stale = report?.dataChanged && !report.dryRun;
-	const runAsOf = dataAsOfDate(account.data, dashboard.data?.asOfDate);
+	const runAsOf = dashboard.data?.suggestedAsOfDate ?? dataAsOfDate(account.data, dashboard.data?.asOfDate);
 
 	return (
 		<div className="flex flex-col gap-4 sm:gap-5">
