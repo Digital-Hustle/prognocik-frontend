@@ -46,6 +46,7 @@ const CODE_MESSAGES: Record<string, string> = {
 	IDEMPOTENCY_KEY_REUSED: "Этот запрос уже отправлялся с другими данными.",
 	CONCURRENT_REQUEST: "Такой запрос уже выполняется.",
 	DEPENDENCY_UNAVAILABLE: "Сервис расчёта временно недоступен.",
+	EXTERNAL_DOCUMENT_EXISTS: "Этот документ уже загружен.",
 	BITRIX_NOT_CONFIGURED: "Вебхук Битрикс24 не настроен. Вставьте адрес входящего вебхука.",
 	BITRIX_WEBHOOK_INVALID: "Адрес вебхука не подходит: проверьте ссылку и домен портала.",
 	BITRIX_AUTH_FAILED: "Битрикс24 отклонил вебхук. Проверьте права и актуальность ссылки.",

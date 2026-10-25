@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/Card/Card"
 import { PageHeader } from "@/shared/ui/PageHeader/PageHeader";
 import { Status } from "@/shared/ui/Status/Status";
 import { BitrixIntegration } from "@/widgets/BitrixIntegration";
+import { OneCIntegration } from "@/widgets/OneCIntegration";
 import { INTEGRATIONS } from "../model/catalog";
 import type { IntegrationCard, IntegrationId } from "../model/catalog";
 
@@ -142,6 +143,11 @@ const IntegrationsPage = () => {
 			>
 				{selected.id === "bitrix24" ? (
 					<BitrixIntegration
+						companyId={companyId}
+						accountId={accountId}
+					/>
+				) : selected.id === "1c" ? (
+					<OneCIntegration
 						companyId={companyId}
 						accountId={accountId}
 					/>

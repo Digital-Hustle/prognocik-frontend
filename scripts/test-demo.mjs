@@ -420,6 +420,14 @@ try {
 		),
 		"Bitrix plans must carry sourceDocument"
 	);
+	const c1 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: day, dryRun: true });
+	check(c1.dryRun && c1.created === 3 && !c1.dataChanged, "1C preview must not change data");
+	const c2 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: day });
+	check(c2.dataChanged && c2.created === 3, "1C sync must create three plans");
+	const c3 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: day });
+	check(!c3.dataChanged && c3.unchanged === 3, "Second 1C sync must be a no-op");
+	const c4 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: addDays(day, 2) });
+	check(c4.updated === 3, "1C sync with a later window must shift due dates");
 	check((await get(`${company}/tax-calendar?year=2026`)).items.length > 0, "Tax calendar must have items");
 	const calendar = await get(`${account}/payment-calendar?fromDate=${day}&toDate=${addDays(day, 29)}`);
 	check(calendar.days.length === 30, "Payment calendar must include every date");
