@@ -84,7 +84,7 @@ export const AlertsPanel = memo(({ companyId, accountId, alerts, canWrite, class
 										className={cn(
 											"flex items-start gap-3 rounded-md bg-muted p-3 outline-none",
 											explainable &&
-												"cursor-pointer hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring"
+												"cursor-pointer hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring"
 										)}
 									>
 										<span

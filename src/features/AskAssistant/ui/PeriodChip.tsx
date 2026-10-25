@@ -50,7 +50,7 @@ export const PeriodChip = ({
 						onChange(null);
 					}}
 					aria-label="Сбросить период"
-					className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+					className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 				>
 					<X className="size-4" />
 				</button>

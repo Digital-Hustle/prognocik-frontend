@@ -87,7 +87,7 @@ export const Calendar = ({
 					type="button"
 					onClick={() => shift(-1)}
 					aria-label="Предыдущий месяц"
-					className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+					className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 				>
 					<ChevronLeft className="size-4" />
 				</button>
@@ -114,7 +114,7 @@ export const Calendar = ({
 					type="button"
 					onClick={() => shift(1)}
 					aria-label="Следующий месяц"
-					className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+					className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 				>
 					<ChevronRight className="size-4" />
 				</button>
@@ -163,7 +163,7 @@ export const Calendar = ({
 										inR && "bg-accent text-accent-foreground",
 										k === rFrom && rTo && "rounded-l-md bg-accent",
 										k === rTo && rFrom && "rounded-r-md bg-accent",
-										!sel && !inR && "rounded-md hover:bg-surface"
+										!sel && !inR && "rounded-md hover:bg-surface-hover"
 									)}
 								>
 									{sel && <Dot className="rounded-md" />}
@@ -191,7 +191,7 @@ export const Calendar = ({
 						setYm({ y, m: m - 1 });
 						onPick(today);
 					}}
-					className="rounded-sm px-2 py-1 text-sm font-medium text-accent-foreground hover:bg-surface"
+					className="rounded-sm px-2 py-1 text-sm font-medium text-accent-foreground hover:bg-surface-hover"
 				>
 					Сегодня
 				</button>
@@ -335,7 +335,7 @@ export const DateRangePicker = ({
 										p.setOpen(false);
 									}}
 									className={cn(
-										"rounded-md px-2.5 py-2 text-left text-sm transition-colors duration-fast hover:bg-surface",
+										"rounded-md px-2.5 py-2 text-left text-sm transition-colors duration-fast hover:bg-surface-hover",
 										on && "bg-accent font-medium text-accent-foreground"
 									)}
 								>
@@ -400,7 +400,7 @@ const TimeCol = ({
 					onClick={() => set(v)}
 					className={cn(
 						"relative shrink-0 rounded-md py-2 text-sm tabular-nums transition-colors duration-fast",
-						v === cur ? "font-semibold text-primary-foreground" : "hover:bg-surface"
+						v === cur ? "font-semibold text-primary-foreground" : "hover:bg-surface-hover"
 					)}
 				>
 					{v === cur && <Dot className="rounded-md" />}

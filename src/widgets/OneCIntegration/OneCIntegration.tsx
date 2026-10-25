@@ -91,14 +91,6 @@ export const OneCIntegration = ({ companyId, accountId }: { companyId: string; a
 					</CardContent>
 				</Card>
 			</motion.div>
-
-			<Card>
-				<CardContent className="text-sm text-muted-foreground">
-					Реальной 1С пока нет: сервер отдаёт фиксированный реестр из трёх документов — налог по УСН, счёт
-					поставщика и счёт покупателю. Это показывает формат: документы приходят обычными планами с номером и
-					датой выставления. Повторная загрузка безопасна, а изменённые вручную планы не перезаписываются.
-				</CardContent>
-			</Card>
 		</div>
 	);
 };

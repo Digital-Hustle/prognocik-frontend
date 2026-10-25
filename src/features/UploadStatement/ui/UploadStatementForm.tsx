@@ -97,7 +97,7 @@ export const UploadStatementForm = memo(
 					transition={spring.snappy}
 					className={cn(
 						"relative flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors",
-						drag ? "border-brand bg-accent" : "border-border-strong bg-muted hover:bg-surface",
+						drag ? "border-brand bg-accent" : "border-border-strong bg-muted hover:bg-surface-hover",
 						disabled && "pointer-events-none opacity-60"
 					)}
 				>

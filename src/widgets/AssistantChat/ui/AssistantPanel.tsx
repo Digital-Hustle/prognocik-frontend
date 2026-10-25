@@ -90,7 +90,7 @@ export const AssistantPanel = ({
 						}}
 						aria-label="Новый разговор"
 						title="Новый разговор"
-						className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+						className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 					>
 						<RotateCcw className="size-4" />
 					</button>
@@ -99,7 +99,7 @@ export const AssistantPanel = ({
 					type="button"
 					onClick={onClose}
 					aria-label="Закрыть"
-					className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface hover:text-foreground"
+					className="flex size-control-sm items-center justify-center rounded-sm text-muted-foreground transition-colors duration-fast hover:bg-surface-hover hover:text-foreground"
 				>
 					<X className="size-5" />
 				</button>
@@ -119,7 +119,7 @@ export const AssistantPanel = ({
 							type="button"
 							onClick={() => dispatch(assistantActions.setContext(null))}
 							aria-label="Убрать привязку к разрыву"
-							className="flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-surface hover:text-foreground"
+							className="flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground"
 						>
 							<X className="size-3.5" />
 						</button>
