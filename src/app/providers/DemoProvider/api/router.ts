@@ -234,6 +234,32 @@ function employeeRoute(request: Request, parts: string[], body: Body, companyId:
 		};
 		return touch();
 	}
+	if (action === "recurring-payment" && method === "PUT") {
+		const { data } = state(text(body, "accountId"), companyId);
+		const index = data.recurring.findIndex((p) => p.id === text(body, "recurringPatternId"));
+		const pattern = required(data.recurring[index]);
+		if (pattern.direction !== "OUT") return fail(422, "PAYROLL_DIRECTION", "Выберите списание");
+		if (typeof body.patternVersion !== "number")
+			return fail(422, "PATTERN_VERSION_REQUIRED", "Нужна текущая версия платежа");
+		if (body.patternVersion !== pattern.version)
+			return fail(409, "VERSION_CONFLICT", "Платёж уже изменился. Обновите данные.");
+		if (
+			(employee.recurringPayment && employee.recurringPayment.id !== pattern.id) ||
+			list.some((e) => e.id !== employee.id && e.recurringPayment?.id === pattern.id)
+		)
+			return fail(422, "PAYROLL_ALREADY_LINKED", "У сотрудника или платежа уже есть другая связь");
+		const linked = {
+			...pattern,
+			direction: "OUT" as const,
+			status: "CONFIRMED" as const,
+			statusSource: "USER" as const,
+			employeePayment: true,
+			version: pattern.version + 1,
+		};
+		data.recurring[index] = linked;
+		employee.recurringPayment = linked;
+		return touch();
+	}
 	if (action === "recurring-payment" && method === "DELETE") {
 		if (employee.recurringPayment) employee.recurringPayment.status = "EXCLUDED";
 		return touch();
