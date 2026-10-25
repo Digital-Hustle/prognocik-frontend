@@ -330,8 +330,9 @@ const ForecastPage = () => {
 											</CardHeader>
 											<div className="p-4 sm:p-6">
 												<WhatIfPanel
+													companyId={companyId}
+													accountId={accountId}
 													forecast={f}
-													upcoming={d.upcomingPayments}
 													onResult={onScenario}
 													canSave={canWrite}
 													onSaveExpense={(amount, date) => {

@@ -420,6 +420,21 @@ try {
 		),
 		"Bitrix plans must carry sourceDocument"
 	);
+	const sc = await get(`${account}/scenarios/preview`, "POST", {
+		forecastId: null,
+		changes: [{ type: "UNPLANNED_EXPENSE", amount: "5000000.00", date: addDays(day, 3) }],
+	});
+	check(
+		sc.comparison.scenario.firstGapDate !== null && sc.days.length > 0,
+		"Scenario with a huge expense must create a gap"
+	);
+	check(
+		sc.comparison.scenario.minimumBalance < sc.comparison.base.minimumBalance ||
+			Number(sc.comparison.scenario.minimumBalance) < Number(sc.comparison.base.minimumBalance),
+		"Scenario must lower the minimum balance"
+	);
+	const mp = await get(`${account}/scenarios/max-payment`, "POST", { date: addDays(day, 5), keepBuffer: false });
+	check(Number(mp.base.maxAmount) >= 0 && mp.date === addDays(day, 5), "Max payment must answer for the date");
 	const c1 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: day, dryRun: true });
 	check(c1.dryRun && c1.created === 3 && !c1.dataChanged, "1C preview must not change data");
 	const c2 = await get(`${account}/integrations/onec/sync`, "POST", { fromDate: day });
